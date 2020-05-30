@@ -28,7 +28,7 @@ if __name__ == '__main__':
     COL_Y = ['yBenchMark']
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "WienerHammerBenchmark.csv"))
+    df_X = pd.read_csv(os.path.join("data", "WienerHammerstein2009Files", "WienerHammerBenchmark.csv"))
 
     # Extract data
     y_meas = np.array(df_X[COL_Y], dtype=np.float32)

@@ -1,1 +1,4 @@
 /examples/WH2009/data/
+/sphinx/build/
+/examples/WH2009/models/
+/.idea/
