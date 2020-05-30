@@ -1,8 +1,8 @@
 dynoNet API
-==========================
----------------
-LTI blocks
----------------
+===========
+-----------------------
+Linear dynamical blocks
+-----------------------
 
 .. automodule:: torchid.module.lti
    :members:
@@ -10,9 +10,9 @@ LTI blocks
    :member-order: bysource
    :exclude-members: __init__, forward
 
----------------
-Static blocks
----------------
+------------------------
+Static non-linear blocks
+------------------------
 
 .. automodule:: torchid.module.static
    :members:

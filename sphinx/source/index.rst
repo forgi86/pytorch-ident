@@ -10,7 +10,8 @@ Welcome to the dynoNet documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   code
+   dynonet
+   metrics
 
 
 Indices and tables
