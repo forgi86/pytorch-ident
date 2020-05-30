@@ -9,3 +9,14 @@ Discrete-time state-space models
    :special-members:
    :member-order: bysource
    :exclude-members: __init__, forward
+
+----------------------------------
+Continuous-time state-space models
+----------------------------------
+
+.. automodule:: torchid.module.ssmodels_ct
+   :members:
+   :special-members:
+   :member-order: bysource
+   :exclude-members: __init__, forward
+
