@@ -1,17 +1,8 @@
 State-space system identification
 =================================
---------------------------------
-Discrete-time state-space models
---------------------------------
-
-.. automodule:: torchid.module.ssmodels_dt
-   :members:
-   :special-members:
-   :member-order: bysource
-   :exclude-members: __init__, forward
 
 ----------------------------------
-Continuous-time state-space models
+Continuous-time
 ----------------------------------
 
 .. automodule:: torchid.module.ssmodels_ct
@@ -20,3 +11,24 @@ Continuous-time state-space models
    :member-order: bysource
    :exclude-members: __init__, forward
 
+.. automodule:: torchid.module.ss_simulator_ct
+   :members:
+   :special-members:
+   :member-order: bysource
+   :exclude-members: __init__, forward
+
+--------------------------------
+Discrete-time
+--------------------------------
+
+.. automodule:: torchid.module.ssmodels_dt
+   :members:
+   :special-members:
+   :member-order: bysource
+   :exclude-members: __init__, forward
+
+.. automodule:: torchid.module.ss_simulator_dt
+   :members:
+   :special-members:
+   :member-order: bysource
+   :exclude-members: __init__, forward

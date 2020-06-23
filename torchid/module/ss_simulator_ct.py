@@ -7,14 +7,16 @@ from typing import List
 
 class ForwardEulerSimulator(nn.Module):
 
-    """ This class implements prediction/simulation methods for the SS model structure
+    r""" Forward Euler integration of a continuous-time neural state space model.
 
-     Attributes
-     ----------
-     ss_model: nn.Module
-               The neural SS model to be fitted
-     ts: float
-         model sampling time
+    Args:
+        ss_model (nn.Module): The neural SS model to be fitted
+        ts (np.float): model sampling time
+
+    Examples::
+
+        >>> ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+        >>> nn_solution = ForwardEulerSimulator(ss_model)
 
      """
 
@@ -24,21 +26,18 @@ class ForwardEulerSimulator(nn.Module):
         self.ts = ts
 
     def forward(self, x0_batch: torch.Tensor, u_batch: torch.Tensor) -> torch.Tensor:
-        """ Multi-step simulation over (mini)batches
+        r""" Multi-step simulation over (mini)batches
 
-        Parameters
-        ----------
-        x0_batch: Tensor. Size: (q, n_x)
-             Initial state for each subsequence in the minibatch
+        Parameters:
+            x0_batch (Tensor Size: (q, n_x)): Initial state for each subsequence in the minibatch
+            u_batch (Tensor. Size: (m, q, n_u): Input sequence for each subsequence in the minibatch
 
-        u_batch: Tensor. Size: (m, q, n_u)
-            Input sequence for each subsequence in the minibatch
+        Returns:
+            Tensor Size: (m, q, n_x): Simulated state for all subsequences in the minibatch
 
-        Returns
-        -------
-        Tensor. Size: (m, q, n_x)
-            Simulated state for all subsequences in the minibatch
+        Examples::
 
+        >>> y_sim = nn_solution(x0, u)
         """
 
         X_sim_list: List[torch.Tensor] = []

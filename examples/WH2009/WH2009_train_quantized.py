@@ -6,8 +6,12 @@ from torchid.module.lti import SisoLinearDynamicalOperator
 from torchid.module.static import SisoStaticNonLinearity
 import matplotlib.pyplot as plt
 import time
-import torch.nn as nn
 import util.metrics
+
+
+def normal_standard_cdf(val):
+    """Returns the value of the cumulative distribution function for a standard normal variable"""
+    return 1/2 * (1 + torch.erf(val/np.sqrt(2)))
 
 
 # In[Main]
@@ -18,20 +22,20 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     # In[Settings]
-    lr_ADAM = 2e-4
-    lr_BFGS = 1e0
-    num_iter_ADAM = 40000  # ADAM iterations 20000
-    num_iter_BFGS = 0  # final BFGS iterations
+    lr = 1e-4
+    num_iter = 200000
     msg_freq = 100
     n_skip = 5000
     n_fit = 20000
     decimate = 1
     n_batch = 1
-    n_b = 8
-    n_a = 8
-    model_name = "model_WH"
+    n_b = 3
+    n_a = 3
 
-    num_iter = num_iter_ADAM + num_iter_BFGS
+    meas_intervals = np.array([-1.0, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1.0], dtype=np.float32)
+    meas_intervals_full = np.r_[-1000, meas_intervals, 1000]
+
+    model_name = "model_WH_digit"
 
     # In[Column names in the dataset]
     COL_F = ['fs']
@@ -49,19 +53,28 @@ if __name__ == '__main__':
     ts = 1/fs
     t = np.arange(N)*ts
 
+    # In[Compute v signal]
+    v = np.digitize(y, bins=meas_intervals)
+    bins = meas_intervals_full[np.c_[v, v+1]] # bins of the measurement
+
     # In[Fit data]
+    bins_fit = bins[0:n_fit:decimate, :]
+    v_fit = v[0:n_fit:decimate]
     y_fit = y[0:n_fit:decimate]
     u_fit = u[0:n_fit:decimate]
     t_fit = t[0:n_fit:decimate]
 
     # In[Prepare training tensors]
     u_fit_torch = torch.tensor(u_fit[None, :, :], dtype=torch.float, requires_grad=False)
-    y_fit_torch = torch.tensor(y_fit[None, :, :], dtype=torch.float)
+    bins_fit_torch = torch.tensor(bins_fit[None, :, :], dtype=torch.float, requires_grad=False)
+    v_fit_torch = torch.tensor(v_fit[None, :, :], dtype=torch.float)
 
     # In[Prepare model]
     G1 = SisoLinearDynamicalOperator(n_b, n_a, n_k=1)
     F_nl = SisoStaticNonLinearity(n_hidden=10, activation='tanh')
     G2 = SisoLinearDynamicalOperator(n_b, n_a)
+
+    log_sigma_hat = torch.tensor(np.log(1.0), requires_grad=True)  # torch.randn(1, requires_grad = True)
 
     def model(u_in):
         y1_lin = G1(u_fit_torch)
@@ -70,47 +83,41 @@ if __name__ == '__main__':
         return y_hat, y1_nl, y1_lin
 
     # In[Setup optimizer]
-    optimizer_ADAM = torch.optim.Adam([
-        {'params': G1.parameters(), 'lr': lr_ADAM},
-        {'params': G2.parameters(), 'lr': lr_ADAM},
-        {'params': F_nl.parameters(), 'lr': lr_ADAM},
-    ], lr=lr_ADAM)
-
-    optimizer_LBFGS = torch.optim.LBFGS(list(G1.parameters()) + list(G2.parameters()) + list(F_nl.parameters()), lr=lr_BFGS)
-
-
-    def closure():
-        optimizer_LBFGS.zero_grad()
-
-        # Simulate
-        y_hat, y1_nl, y1_lin = model(u_fit_torch)
-
-        # Compute fit loss
-        err_fit = y_fit_torch[:, n_skip:, :] - y_hat[:, n_skip:, :]
-        loss = torch.mean(err_fit**2)*1000
-
-        # Backward pas
-        loss.backward()
-        return loss
+    optimizer = torch.optim.Adam([
+        {'params': G1.parameters(), 'lr': lr},
+        {'params': G2.parameters(), 'lr': lr},
+        {'params': F_nl.parameters(), 'lr': lr},
+        {'params': log_sigma_hat, 'lr': 2e-5},
+    ], lr=lr)
 
 
     # In[Train]
     LOSS = []
+    SIGMA = []
     start_time = time.time()
+    #num_iter = 20
     for itr in range(0, num_iter):
 
-        if itr < num_iter_ADAM:
-            msg_freq = 10
-            loss_train = optimizer_ADAM.step(closure)
-        else:
-            msg_freq = 10
-            loss_train = optimizer_LBFGS.step(closure)
+        optimizer.zero_grad()
+
+        sigma_hat = torch.exp(log_sigma_hat)
+        y_hat, y1_nl, y1_lin = model(u_fit_torch)
+        Phi_hat = normal_standard_cdf((bins_fit_torch - y_hat)/(sigma_hat + 1e-6))
+        y_Phi_hat = Phi_hat[..., [1]] - Phi_hat[..., [0]]
+        y_hat_log = y_Phi_hat.log()
+        loss_train = - y_hat_log.mean()
 
         LOSS.append(loss_train.item())
+        SIGMA.append(sigma_hat.item())
+
         if itr % msg_freq == 0:
             with torch.no_grad():
-                RMSE = torch.sqrt(loss_train)
-            print(f'Iter {itr} | Fit Loss {loss_train:.6f} | RMSE:{RMSE:.4f}')
+                pass
+                #RMSE = torch.sqrt(loss_train)
+            print(f'Iter {itr} | Fit Loss {loss_train:.5f} sigma_hat:{sigma_hat:.5f}')
+
+        loss_train.backward()
+        optimizer.step()
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
@@ -143,6 +150,11 @@ if __name__ == '__main__':
     # In[Plot loss]
     plt.figure()
     plt.plot(LOSS)
+    plt.grid(True)
+
+    # In[Plot sigma]
+    plt.figure()
+    plt.plot(SIGMA)
     plt.grid(True)
 
     # In[Plot static non-linearity]

@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug  5 11:00:29 2019
-
-@author: marco
-"""
 import torch
 import torch.nn as nn
 import numpy as np
@@ -12,18 +6,19 @@ from torch.jit import Final
 
 class NeuralStateSpaceModel(nn.Module):
 
-    """ This class implements a state-space neural model with structure
-        x_{k+1} = NN_x(x_k, u_k)
+    r"""A state-space discrete-time model. The state mapping is a neural network with one hidden layer.
 
-     Attributes
-     ----------
-     n_x : int.
-           number of states
-     n_u : int.
-           number of inputs
-     n_feat : int.
-           number of units in the hidden layer
-     """
+    Args:
+        n_x (int): Number of state variables
+        n_u (int): Number of input variables
+        n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
+        init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
+        activation: (str): Activation function in the hidden layer. Either 'relu', 'softplus', 'tanh'. Default: 'relu'
+
+    Examples::
+
+        >>> ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+    """
 
     def __init__(self, n_x, n_u, n_feat=64, init_small=True):
         super(NeuralStateSpaceModel, self).__init__()
@@ -48,45 +43,22 @@ class NeuralStateSpaceModel(nn.Module):
         return DX
 
 
-class NeuralStateSpaceModelLin(nn.Module):
-    """ This class implements a state-space neural model with structure
-        x_{k+1} = A_L x_k + B_K u_k + NN_x(x_k, u_k)
-
-     Attributes
-     ----------
-     n_x : int.
-           number of states
-     n_u : int.
-           number of inputs
-     n_feat : int.
-           number of units in the hidden layer
-     """
-    def __init__(self, AL, BL):
-        super(NeuralStateSpaceModelLin, self).__init__()
-        self.net = nn.Sequential(
-            nn.Linear(3, 64),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(64, 2)
-        )
-
-        self.AL = nn.Linear(2, 2, bias=False)
-        self.AL.weight = torch.nn.Parameter(torch.tensor(AL.astype(np.float32)), requires_grad=False)
-        self.BL = nn.Linear(1, 2, bias=False)
-        self.BL.weight = torch.nn.Parameter(torch.tensor(BL.astype(np.float32)), requires_grad=False)
-
-        for m in self.net.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, mean=0, std=1e-2)
-                nn.init.constant_(m.bias, val=0)
-    
-    def forward(self, X, U):
-        XU = torch.cat((X, U), -1)
-        DX = self.net(XU)
-        DX += self.AL(X) + self.BL(U)
-        return DX   
-
-
 class DeepNeuralStateSpaceModel(nn.Module):
+    r"""A state-space discrete-time model. The state mapping is a neural network with two hidden layers.
+
+
+    Args:
+        n_x (int): Number of state variables
+        n_u (int): Number of input variables
+        n_feat: (int, optional): Number of input features in the two hidden layer. Default:64
+        init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
+        activation: (str): Activation function in the hidden layer. Either 'relu', 'softplus', 'tanh'. Default: 'relu'
+
+    Examples::
+
+        >>> ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+    """
+
     n_x: Final[int]
     n_u: Final[int]
     n_feat: Final[int]
@@ -119,7 +91,17 @@ class DeepNeuralStateSpaceModel(nn.Module):
         dx = dx * self.scale_dx
         return dx
 
+
 class StateSpaceModelLin(nn.Module):
+    r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
+    part modeled as a neural network
+
+    Args:
+        A: (np.array): A matrix of the linear part of the model
+        B: (np.array): B matrix of the linear part of the model
+
+    """
+
     def __init__(self, AL, BL):
         super(StateSpaceModelLin, self).__init__()
 
@@ -133,91 +115,16 @@ class StateSpaceModelLin(nn.Module):
         return DX   
 
 
-class CartPoleStateSpaceModel(nn.Module):
-    def __init__(self, Ts, init_small=True):
-        super(CartPoleStateSpaceModel, self).__init__()
-        self.net = nn.Sequential(
-            nn.Linear(5, 64),  # 4 states, 1 input
-            nn.Tanh(),
-            nn.Linear(64, 2),  # 2 state equations (the other 2 are fixed by basic physics)
-        )
-
-        if init_small:
-            for m in self.net.modules():
-                if isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight, mean=0, std=1e-3)
-                    nn.init.constant_(m.bias, val=0)
-
-        self.AL = nn.Linear(4,4, bias=False)
-        self.AL.weight = torch.nn.Parameter(torch.tensor([[0., Ts, 0., 0.],
-                                                          [0., 0., 0., 0.],
-                                                          [0., 0., 0., Ts],
-                                                          [0., 0., 0., 0.]]), requires_grad=False)
-        self.WL = nn.Linear(2,4, bias=False)
-        self.WL.weight = torch.nn.Parameter(torch.tensor([[0., 0.],
-                                                          [1., 0.],
-                                                          [0., 0.],
-                                                          [0., 1.]]), requires_grad=False)
-
-    def forward(self, X, U):
-        X_feat = torch.cat((X[..., [1, 3]], torch.sin(X[..., [2]]), torch.cos(X[..., [2]])), dim=-1) # takes p, w, sin(phi), cos(phi)
-        XU = torch.cat((X_feat,U),-1)
-        FX_TMP = self.net(XU)
-        DX = (self.WL(FX_TMP) + self.AL(X))
-        return DX
-
-
-class CartPoleDeepStateSpaceModel(nn.Module):
-    def __init__(self, Ts, init_small=True):
-        super(CartPoleDeepStateSpaceModel, self).__init__()
-        self.net = nn.Sequential(
-            nn.Linear(5, 64),  # 4 states, 1 input
-            nn.ReLU(),
-            nn.Linear(64, 32), # 2 state equations (the other 2 are fixed by basic physics)
-            nn.ReLU(),
-            #nn.Linear(32, 32),  # 2 state equations (the other 2 are fixed by basic physics)
-            #nn.ReLU(),
-            nn.Linear(32, 2)
-        )
-
-        if init_small:
-            for m in self.net.modules():
-                if isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight, mean=0, std=1e-4)
-                    nn.init.constant_(m.bias, val=0)
-
-        self.AL = nn.Linear(4, 4, bias=False)
-        self.AL.weight = torch.nn.Parameter(torch.tensor([[0., Ts, 0., 0.],
-                                                          [0., 0., 0., 0.],
-                                                          [0., 0., 0., Ts],
-                                                          [0., 0., 0., 0.]]), requires_grad=False)
-        self.WL = nn.Linear(2, 4, bias=False)
-        self.WL.weight = torch.nn.Parameter(torch.tensor([[0., 0.],
-                                                          [1., 0.],
-                                                          [0., 0.],
-                                                          [0., 1.]]), requires_grad=False)
-
-    def forward(self, X, U):
-        X_feat = torch.cat((X[..., [1, 3]], torch.sin(X[..., [2]]), torch.cos(X[..., [2]])), dim=-1) # takes p, w, sin(phi), cos(phi)
-        XU = torch.cat((X_feat, U), -1)
-        FX_TMP = self.net(XU)
-        DX = (self.WL(FX_TMP) + self.AL(X))
-        return DX
-
-
 class CTSNeuralStateSpaceModel(nn.Module):
-    """ This class implements a state-space neural model with structure
-        x_{k+1} = NN_x(x_k, u_k)
+    r"""A state-space model to represent the cascaded two-tank system.
 
-     Attributes
-     ----------
-     n_x : int.
-           number of states
-     n_u : int.
-           number of inputs
-     n_feat : int.
-           number of units in the hidden layer
-     """
+
+    Args:
+        n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
+        scale_dx: (str): Scaling factor for the neural network output. Default: 1.0
+        init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
+
+    """
 
     def __init__(self, n_x, n_u, n_feat=64, ts=1.0, init_small=True):
         super(CTSNeuralStateSpaceModel, self).__init__()

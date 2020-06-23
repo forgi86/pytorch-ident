@@ -9,7 +9,7 @@ import time
 import matplotlib.pyplot as plt
 import sys
 sys.path.append(os.path.join("..", ".."))
-from torchid.module.ssfitter_dt import NeuralStateSpaceSimulator
+from torchid.module.ss_simulator_dt import NeuralStateSpaceSimulator
 from torchid.module.ssmodels_dt import CTSNeuralStateSpaceModel
 
 
