@@ -102,8 +102,6 @@ if __name__ == '__main__':
 
 
     # In[FIR coefficients]
-
-    g_pars = G.b_coeff[0, 0, :].detach().numpy()
-    g_pars = g_pars[::-1]
+    g_pars, _ = G.get_tfdata()
     fig, ax = plt.subplots()
     ax.plot(g_pars)
