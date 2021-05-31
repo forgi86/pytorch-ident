@@ -4,7 +4,7 @@ dynoNet API
 Linear dynamical blocks
 -----------------------
 
-.. automodule:: torchid.module.lti
+.. automodule:: torchid.dynonet.module.lti
    :members:
    :special-members:
    :member-order: bysource
@@ -14,7 +14,7 @@ Linear dynamical blocks
 Static non-linear blocks
 ------------------------
 
-.. automodule:: torchid.module.static
+.. automodule:: torchid.dynonet.module.static
    :members:
    :special-members:
    :member-order: bysource

@@ -11,8 +11,7 @@ Welcome to the dynoNet documentation!
    :caption: Contents:
 
    dynonet
-   statespace
-   metrics
+
 
 
 Indices and tables

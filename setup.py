@@ -10,7 +10,9 @@ setup(
     packages=find_packages(),
     install_requires=['numpy', 'scipy', 'matplotlib', 'torch'],  # to be checked
     extras_require={
+        'continuous-time integration': ["nodepy"],
         'download datasets': ["requests"],
-        'open datasets': ["pandas"]
+        'open datasets': ["pandas"],
+        'generate documentation': ["sphinx"]
     }
 )
