@@ -1,7 +1,7 @@
-/examples/WH2009/data/
-/sphinx/build/
-/examples/WH2009/models/
+/examples/dynonet/WH2009/data/
+/doc/sphinx/build/
+/examples/dynonet/WH2009/models/
 /.idea/
-/examples/CTS/data/
-/examples/CTS/models/
-/examples/RLC/models/
+/examples/statespace/CTS/data/
+/examples/statespace/CTS/models/
+/examples/statespace/RLC/models/
