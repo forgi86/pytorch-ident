@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='torchid',
+    name='pytorch-ident',
     version='0.1',
     url='https://github.com/forgi86/pytorch-ident.git',
     author='Marco Forgione',
