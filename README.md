@@ -1,5 +1,5 @@
-# pytorch-ident
-System identification routines implemented in PyTorch.
+# pytorch-ident: system identification tools in PyTorch
+A collection of system identification tools implemented in PyTorch.
 
 ## Examples and Documentation
 
