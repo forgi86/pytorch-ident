@@ -24,7 +24,7 @@ Run the command
 ```
 pip install python-mpc
 ```
-This will install the current [stable version](https://github.com/forgi86/pytorch-ident) from the PyPI package repository.
+This will install the current [stable version](https://pypi.org/project/pytorch-ident/0.1/) from the PyPI package repository.
 
 ### Latest version from GitHub
 1. Get a local copy the pyMPC project. For instance, run 
