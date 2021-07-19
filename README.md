@@ -1,21 +1,40 @@
 # pytorch-ident
-System identification in PyTorch
+System identification routines implemented in PyTorch.
 
-# Software requirements:
-Simulations were performed on a Python 3.7 conda environment with
+## Examples and Documentation
+
+See the [**examples**](examples) folder.
+
+
+## Installation:
+
+### Requirements:
+A Python 3.9 conda environment with
 
  * numpy
  * scipy
  * matplotlib
  * pandas
- * pytorch (version 1.4)
+ * pytorch
  
-These dependencies may be installed through the commands:
-```
-conda install numpy scipy pandas matplotlib
-conda install pytorch  cpuonly -c pytorch
-```
+### Stable version from PyPI
 
-``
-pip install requests
-``
+Run the command 
+
+```
+pip install python-mpc
+```
+This will install the current [stable version](https://github.com/forgi86/pytorch-ident) from the PyPI package repository.
+
+### Latest version from GitHub
+1. Get a local copy the pyMPC project. For instance, run 
+```
+git clone https://github.com/forgi86/pytorch-ident.git
+```
+in a terminal to clone the project using git. Alternatively, download the zipped pyMPC project from [this link](https://github.com/forgi86/pytorch-ident/zipball/master) and extract it in a local folder
+
+2. Install pytorch-ident by running
+```
+pip install -e .
+```
+in the project root folder (where the file setup.py is located). 

@@ -1,6 +1,7 @@
 import os
 import requests
 import zipfile
+import examples.util.benchmark_url
 
 if __name__ == '__main__':
 
