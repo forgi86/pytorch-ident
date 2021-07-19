@@ -22,7 +22,7 @@ A Python 3.9 conda environment with
 Run the command 
 
 ```
-pip install python-mpc
+pip install pytorch-ident
 ```
 This will install the current [stable version](https://pypi.org/project/pytorch-ident/0.1/) from the PyPI package repository.
 
