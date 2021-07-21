@@ -5,10 +5,7 @@ import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
 import os
-import sys
-
-sys.path.append(os.path.join("../..", '..'))
-from torchid.statespace.module import NeuralStateSpaceModel
+from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
 from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
 
 if __name__ == '__main__':
@@ -22,7 +19,7 @@ if __name__ == '__main__':
     lr = 1e-4  # learning rate
     num_iter = 40000  # gradient-based optimization steps
     test_freq = 500  # print message every test_freq iterations
-    add_noise = True
+    add_noise = False
 
     # Column names in the dataset
     COL_T = ['time']
@@ -96,16 +93,16 @@ if __name__ == '__main__':
         loss.backward()
         optimizer.step()
 
-    train_time = time.time() - start_time # 114 seconds
+    train_time = time.time() - start_time  # 114 seconds
     print(f"\nTrain time: {train_time:.2f}")
 
     # Save model
     if not os.path.exists("models"):
         os.makedirs("models")
     if add_noise:
-        model_filename = "model_SS_1step_noise.pkl"
+        model_filename = "model_SS_1step_noise.pt"
     else:
-        model_filename = "model_SS_1step_nonoise.pkl"
+        model_filename = "model_SS_1step_nonoise.pt"
 
     torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
 
