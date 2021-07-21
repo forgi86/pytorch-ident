@@ -31,7 +31,7 @@ This will install the current [stable version](https://pypi.org/project/pytorch-
 ```
 git clone https://github.com/forgi86/pytorch-ident.git
 ```
-in a terminal to clone the project using git. Alternatively, download the zipped pyMPC project from [this link](https://github.com/forgi86/pytorch-ident/zipball/master) and extract it in a local folder
+in a terminal to clone the project using git. Alternatively, download the zipped project from [this link](https://github.com/forgi86/pytorch-ident/zipball/master) and extract it in a local folder
 
 2. Install pytorch-ident by running
 ```
