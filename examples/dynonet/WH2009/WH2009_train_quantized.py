@@ -161,7 +161,7 @@ if __name__ == '__main__':
     y1_lin_min = np.min(y1_lin)
     y1_lin_max = np.max(y1_lin)
 
-    in_nl = np.arange(y1_lin_min, y1_lin_max, (y1_lin_max- y1_lin_min)/1000).astype(np.float32).reshape(-1, 1)
+    in_nl = np.arange(y1_lin_min, y1_lin_max, (y1_lin_max - y1_lin_min)/1000).astype(np.float32).reshape(-1, 1)
 
     with torch.no_grad():
         out_nl = F_nl(torch.as_tensor(in_nl))

@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use("TkAgg")
 import os
 import pandas as pd
 import numpy as np
@@ -7,10 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-import sys
-sys.path.append(os.path.join("../..", ".."))
-from torchid.ssmodels_ct import NeuralStateSpaceModel
-from torchid.ss_simulator_ct import ForwardEulerSimulator
+from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
+from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
 
 
 # Soft-constrained integration method
@@ -126,22 +122,23 @@ if __name__ == '__main__':
                 err_sim_torch_fit = x_sim_torch_fit - torch.tensor(x_fit)
                 loss_sim = torch.sqrt(torch.mean(err_sim_torch_fit**2))
                 LOSS_SIM.append(loss_sim.item())
-                print(f'Iter {itr} | Tradeoff Loss {loss:.6f}   Consistency Loss {loss_consistency:.6f}   Fit Loss {loss_fit:.6f} Sim Loss {loss_sim:.6f}')
+                print(f'Iter {itr} | Tradeoff Loss {loss:.6f} '
+                      f'Consistency Loss {loss_consistency:.6f} Fit Loss {loss_fit:.6f} Sim Loss {loss_sim:.6f}')
 
         # Optimize
         loss.backward()
         optimizer.step()
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}") # 182 seconds
+    print(f"\nTrain time: {train_time:.2f}")
 
     # Save model
     if not os.path.exists("models"):
         os.makedirs("models")
     if add_noise:
-        model_filename = f"model_SS_soft_noise.pkl"
+        model_filename = f"model_SS_soft_noise.pt"
     else:
-        model_filename = f"model_SS_soft_nonoise.pkl"
+        model_filename = f"model_SS_soft_nonoise.pt"
 
     torch.save(ss_model.state_dict(), os.path.join("models", model_filename))
 
@@ -187,7 +184,6 @@ if __name__ == '__main__':
     ax[2].plot(np.array(u_torch_val), label='Input')
     ax[2].grid(True)
 
-
     x_hidden_fit_np = x_hidden_fit.detach().numpy()
     fig, ax = plt.subplots(2, 1, sharex=True)
     ax[0].plot(x_fit_nonoise[:, 0], 'k', label='True')
@@ -201,5 +197,3 @@ if __name__ == '__main__':
     ax[1].plot(x_hidden_fit_np[:, 1], 'r', label='Hidden')
     ax[1].legend()
     ax[1].grid(True)
-
-
