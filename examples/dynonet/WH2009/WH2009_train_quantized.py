@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     # In[Compute v signal]
     v = np.digitize(y, bins=meas_intervals)
-    bins = meas_intervals_full[np.c_[v, v+1]] # bins of the measurement
+    bins = meas_intervals_full[np.c_[v, v+1]]  # bins of the measurement
 
     # In[Fit data]
     bins_fit = bins[0:n_fit:decimate, :]
@@ -127,10 +127,9 @@ if __name__ == '__main__':
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
 
-    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
-    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pkl"))
-    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
-
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pt"))
+    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pt"))
+    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pt"))
 
     # In[Simulate one more time]
     with torch.no_grad():
@@ -177,7 +176,7 @@ if __name__ == '__main__':
 
     # In[Plot]
     e_rms = examples.util.metrics.error_rmse(y_hat, y_fit)[0]
-    print(f"RMSE: {e_rms:.2f}") # target: 1mv
+    print(f"RMSE: {e_rms:.2f}")  # target: 1mv
 
 
 

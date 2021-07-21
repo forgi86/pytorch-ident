@@ -73,7 +73,8 @@ if __name__ == '__main__':
         {'params': F_nl.parameters(), 'lr': lr_ADAM},
     ], lr=lr_ADAM)
 
-    optimizer_LBFGS = torch.optim.LBFGS(list(G1.parameters()) + list(G2.parameters()) + list(F_nl.parameters()), lr=lr_BFGS)
+    optimizer_LBFGS = torch.optim.LBFGS(list(G1.parameters())
+                                        + list(G2.parameters()) + list(F_nl.parameters()), lr=lr_BFGS)
 
 
     def closure():

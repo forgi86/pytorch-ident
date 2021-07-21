@@ -1,5 +1,4 @@
 import matplotlib
-matplotlib.use("TkAgg")
 import os
 import pandas as pd
 import numpy as np
@@ -60,8 +59,9 @@ if __name__ == '__main__':
 
         # Select batch indexes
         num_train_samples = u_fit.shape[0]
-        batch_start = np.random.choice(np.arange(num_train_samples - seq_len, dtype=np.int64), batch_size, replace=False) # batch start indices
-        batch_idx = batch_start[:, np.newaxis] + np.arange(seq_len) # batch samples indices
+        batch_start = np.random.choice(np.arange(num_train_samples - seq_len, dtype=np.int64),
+                                       batch_size, replace=False)  # batch start indices
+        batch_idx = batch_start[:, np.newaxis] + np.arange(seq_len)  # batch samples indices
         #batch_idx = batch_idx.T  # transpose indexes to obtain batches with structure (m, q, n_x)
 
         # Extract batch data
@@ -116,14 +116,15 @@ if __name__ == '__main__':
         LOSS_FIT.append(loss_fit.item())
         LOSS_CONSISTENCY.append(loss_consistency.item())
         if itr % test_freq == 0:
-            print(f'Iter {itr} | Tradeoff Loss {loss:.4f}   Consistency Loss {loss_consistency:.4f}   Fit Loss {loss_fit:.4f}')
+            print(f'Iter {itr} | Tradeoff Loss {loss:.4f} '
+                  f'Consistency Loss {loss_consistency:.4f} Fit Loss {loss_fit:.4f}')
 
         # Optimize
         loss.backward()
         optimizer.step()
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}") # 182 seconds
+    print(f"\nTrain time: {train_time:.2f}")  # 182 seconds
 
     if not os.path.exists("models"):
         os.makedirs("models")
@@ -132,8 +133,8 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
-    model_filename =  f"model_SS_{seq_len}step.pkl"
-    hidden_filename = f"hidden_SS_{seq_len}step.pkl"
+    model_filename =  f"model_SS_{seq_len}step.pt"
+    hidden_filename = f"hidden_SS_{seq_len}step.pt"
 
     torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))

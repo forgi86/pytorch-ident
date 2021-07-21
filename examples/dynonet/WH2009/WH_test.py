@@ -1,25 +1,25 @@
-import torch
+import os
 import pandas as pd
 import numpy as np
-import os
-from torchid.dynonet.module.lti import SisoFirLinearDynamicalOperator
-from torchid.dynonet.module.static import SisoStaticNonLinearity
-
-import matplotlib as mpl
+import torch
+import matplotlib
 import matplotlib.pyplot as plt
 import control
-import examples.util.metrics
+import torchid.metrics as metrics
+from torchid.dynonet.module.lti import SisoLinearDynamicalOperator
+from torchid.dynonet.module.static import SisoStaticNonLinearity
 
 
+# In[Main]
 if __name__ == '__main__':
 
-    mpl.rc('text', usetex=True)
-    mpl.rcParams['axes.grid'] = True
-
-    model_name = 'model_WH_FIR'
+    matplotlib.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+    # In[Settings]
+    model_name = 'model_WH'
 
     # Settings
-    n_b = 128
+    n_b = 8
+    n_a = 8
 
     # Column names in the dataset
     COL_F = ['fs']
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # Extract data
     y_meas = np.array(df_X[COL_Y], dtype=np.float32)
     u = np.array(df_X[COL_U], dtype=np.float32)
-    fs = np.array(df_X[COL_F].iloc[0], dtype = np.float32).item()
+    fs = np.array(df_X[COL_F].iloc[0], dtype=np.float32).item()
     N = y_meas.size
     ts = 1/fs
     t = np.arange(N)*ts
@@ -41,14 +41,14 @@ if __name__ == '__main__':
     t_fit_end = 100000
     t_test_start = 100000
     t_test_end = 188000
-    t_skip = 1000
+    t_skip = 1000  # skip for statistics
 
     # In[Instantiate models]
 
     # Create models
-    G1 = SisoFirLinearDynamicalOperator(n_b=n_b)
-    G2 = SisoFirLinearDynamicalOperator(n_b=n_b)
-    F_nl = SisoStaticNonLinearity()
+    G1 = SisoLinearDynamicalOperator(n_b=n_b, n_a=n_a, n_k=1)
+    G2 = SisoLinearDynamicalOperator(n_b=n_b, n_a=n_a, n_k=0)
+    F_nl = SisoStaticNonLinearity(n_hidden=10, activation='tanh')
 
     model_folder = os.path.join("models", model_name)
     # Create model parameters
@@ -73,17 +73,21 @@ if __name__ == '__main__':
     plt.plot(t, y_meas, 'k', label="$y$")
     plt.plot(t, y_hat, 'b', label="$\hat y$")
     plt.plot(t, y_meas - y_hat, 'r', label="$e$")
-    plt.legend(loc='upper left')
+    plt.grid(True)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Voltage (V)')
+    plt.legend(loc='upper right')
+    plt.savefig('WH_fit.pdf')
 
     # In[Inspect linear model]
 
-    n_imp = n_b
+    n_imp = 128
     G1_num, G1_den = G1.get_tfdata()
     G1_sys = control.TransferFunction(G1_num, G1_den, ts)
     plt.figure()
     plt.title("$G_1$ impulse response")
     _, y_imp = control.impulse_response(G1_sys, np.arange(n_imp) * ts)
-#    plt.plot(G1_num)
+    #    plt.plot(G1_num)
     plt.plot(y_imp)
     plt.savefig(os.path.join("models", model_name, "G1_imp.pdf"))
     plt.figure()
@@ -91,8 +95,7 @@ if __name__ == '__main__':
     plt.suptitle("$G_1$ bode plot")
     plt.savefig(os.path.join("models", model_name, "G1_bode.pdf"))
 
-
-    #G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
+    # G2_b = G2.G.weight.detach().numpy()[0, 0, ::-1]
     G2_num, G2_den = G2.get_tfdata()
     G2_sys = control.TransferFunction(G2_num, G2_den, ts)
     plt.figure()
@@ -105,9 +108,7 @@ if __name__ == '__main__':
     plt.suptitle("$G_2$ bode plot")
     plt.savefig(os.path.join("models", model_name, "G2_bode.pdf"))
 
-#mag_G2, phase_G2, omega_G2 = control.bode(G2_sys)
-
-    # In[Inspect static non-linearity]
+# In[Inspect static non-linearity]
 
     y1_lin_min = np.min(y1_lin)
     y1_lin_max = np.max(y1_lin)
@@ -126,10 +127,25 @@ if __name__ == '__main__':
 
     # In[Metrics]
     idx_test = range(t_test_start + t_skip, t_test_end)
-    e_rms = 1000 * examples.util.metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
-    fit_idx = examples.util.metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
-    r_sq = examples.util.metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
+    e_rms = 1000 * metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
+    fit_idx = metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
+    r_sq = metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 
-    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.2f}")
+    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
 
+    # In[Plot for paper]
+
+    t_test_start = 140000
+    len_plot = 1000
+
+    plt.figure(figsize=(4, 3))
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot], 'k', label="$\mathbf{y}^{\mathrm{meas}}$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_hat[t_test_start:t_test_start+len_plot], 'b--', label="$\mathbf{y}$")
+    plt.plot(t[t_test_start:t_test_start+len_plot], y_meas[t_test_start:t_test_start+len_plot] - y_hat[t_test_start:t_test_start+len_plot], 'r', label="$\mathbf{e}$")
+    plt.grid(True)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Voltage (V)')
+    plt.legend(loc='upper right')
+    plt.tight_layout()
+    plt.savefig('WH_timetrace.pdf')

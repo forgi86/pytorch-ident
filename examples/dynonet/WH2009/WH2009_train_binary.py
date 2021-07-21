@@ -118,9 +118,9 @@ if __name__ == '__main__':
     if not os.path.exists(model_folder):
         os.makedirs(model_folder)
 
-    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pkl"))
-    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pkl"))
-    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pkl"))
+    torch.save(G1.state_dict(), os.path.join(model_folder, "G1.pt"))
+    torch.save(F_nl.state_dict(), os.path.join(model_folder, "F_nl.pt"))
+    torch.save(G2.state_dict(), os.path.join(model_folder, "G2.pt"))
 
 
     # In[Simulate one more time]

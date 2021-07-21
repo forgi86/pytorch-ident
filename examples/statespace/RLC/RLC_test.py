@@ -1,15 +1,12 @@
+import os
 import pandas as pd
 import numpy as np
-import torch
 import matplotlib
 import matplotlib.pyplot as plt
-import os
-import sys
-
-sys.path.append(os.path.join("../..", ".."))
-from torchid.ssmodels_ct import NeuralStateSpaceModel
-from torchid.ss_simulator_ct import ExplicitRKSimulator, ForwardEulerSimulator
-from common import metrics
+import torch
+from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
+from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
+import torchid.metrics as metrics
 
 if __name__ == '__main__':
 
@@ -73,7 +70,7 @@ if __name__ == '__main__':
     #scale_dx = 100
     ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)#, scale_dx=scale_dx)
     nn_solution = ForwardEulerSimulator(ss_model, ts=ts_integ)
-    model_filename = f"model_SS_{model_type}.pkl"
+    model_filename = f"model_SS_{model_type}.pt"
     nn_solution.ss_model.load_state_dict(torch.load(os.path.join("models", model_filename)))
 
     # Evaluate the model in open-loop simulation against validation data

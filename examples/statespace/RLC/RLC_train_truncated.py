@@ -1,16 +1,12 @@
-import matplotlib
-matplotlib.use("TkAgg")
 import os
+import time
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
-import time
-import matplotlib.pyplot as plt
-import sys
-sys.path.append(os.path.join("../..", ".."))
-from torchid.ssmodels_ct import NeuralStateSpaceModel
-from torchid.ss_simulator_ct import ForwardEulerSimulator
+from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
+from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
 
 # Truncated simulation error minimization method
 if __name__ == '__main__':
@@ -22,7 +18,7 @@ if __name__ == '__main__':
     # Overall parameters
     num_iter = 10000  # gradient-based optimization steps
     seq_len = 64  # subsequence length m
-    batch_size = 64 # batch size q
+    batch_size = 64  # batch size q
     t_fit = 2e-3  # fitting on t_fit ms of data
     alpha = 1.0  # regularization weight
     lr = 1e-3  # learning rate
@@ -70,7 +66,7 @@ if __name__ == '__main__':
 
     # Setup neural model structure
     ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
-    nn_solution = ForwardEulerSimulator(ss_model) #ForwardEulerSimulator(ss_model) #ExplicitRKSimulator(ss_model)
+    nn_solution = ForwardEulerSimulator(ss_model)  # ExplicitRKSimulator(ss_model)
 
     # Setup optimizer
     params_net = list(nn_solution.ss_model.parameters())
@@ -85,8 +81,9 @@ if __name__ == '__main__':
 
         # Select batch indexes
         num_train_samples = x_fit.shape[0]
-        batch_start = np.random.choice(np.arange(num_train_samples - seq_len, dtype=np.int64), batch_size, replace=False) # batch start indices
-        batch_idx = batch_start[:, np.newaxis] + np.arange(seq_len) # batch samples indices
+        batch_start = np.random.choice(np.arange(num_train_samples - seq_len, dtype=np.int64),
+                                       batch_size, replace=False)  # batch start indices
+        batch_idx = batch_start[:, np.newaxis] + np.arange(seq_len)  # batch samples indices
         batch_idx = batch_idx.T  # transpose indexes to obtain batches with structure (m, q, n_x)
 
         # Extract batch data
@@ -143,7 +140,8 @@ if __name__ == '__main__':
         LOSS_FIT.append(loss_fit.item())
         if itr % test_freq == 0:
             with torch.no_grad():
-                print(f'Iter {itr} | Tradeoff Loss {loss:.4f}   Consistency Loss {loss_consistency:.4f}   Fit Loss {loss_fit:.4f}')
+                print(f'Iter {itr} | Tradeoff Loss {loss:.4f}'
+                      f' Consistency Loss {loss_consistency:.4f} Fit Loss {loss_fit:.4f}')
 
         # Optimize
         loss.backward()
@@ -156,11 +154,11 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
     if add_noise:
-        model_filename = f"model_SS_{seq_len}step_noise.pkl"
-        hidden_filename = f"hidden_SS_{seq_len}step_noise.pkl"
+        model_filename = f"model_SS_{seq_len}step_noise.pt"
+        hidden_filename = f"hidden_SS_{seq_len}step_noise.pt"
     else:
-        model_filename = f"model_SS_{seq_len}step_nonoise.pkl"
-        hidden_filename = f"hidden_SS_{seq_len}step_nonoise.pkl"
+        model_filename = f"model_SS_{seq_len}step_nonoise.pt"
+        hidden_filename = f"hidden_SS_{seq_len}step_nonoise.pt"
 
     torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
