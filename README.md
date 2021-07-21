@@ -1,6 +1,9 @@
 # System identification tools in PyTorch
 A collection of system identification tools implemented in PyTorch.
 
+* State-space identification methods (see [1], [2], [3])
+* Differentiable transfer functions (see [4], [5])
+
 ## Examples and Documentation
 
 See the [**examples**](examples) folder.
@@ -38,3 +41,10 @@ in a terminal to clone the project using git. Alternatively, download the zipped
 pip install -e .
 ```
 in the project root folder (where the file setup.py is located). 
+
+# Bibliography
+[1] M. Forgione and D. Piga. Model structures and fitting criteria for system identification with neural networks. In Proceedings of the 14th IEEE International Conference Application of Information and Communication Technologies, 2020.
+[2] B. Mavkov, M. Forgione, D. Piga. Integrated Neural Networks for Nonlinear Continuous-Time System Identification. IEEE Control Systems Letters, 4(4), pp 851-856, 2020.
+[3] M. Forgione and D. Piga. Continuous-time system identification with neural networks: model structures and fitting criteria. European Journal of Control, 59:68-81, 2021.
+[4] M. Forgione and D. Piga. dynoNet: a neural network architecture for learning dynamical systems. International Journal of Adaptive Control and Signal Processing, 2021. 
+[5] D. Piga, M.Forgione and M. Mejari. Deep learning with transfer functions: new applications in system identification. In Proceedings of the the 2021 SysId Conference, 2021.
