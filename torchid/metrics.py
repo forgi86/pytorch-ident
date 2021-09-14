@@ -55,6 +55,33 @@ def error_rmse(y_true, y_pred, time_axis=0):
     return RMSE
 
 
+def error_nrmse(y_true, y_pred, time_axis=0):
+    """ Computes the Normalized Root Mean Square Error (NRMSE).
+
+    The NRMSE index is computed separately on each channel.
+
+    Parameters
+    ----------
+    y_true : np.array
+        Array of true values.  If must be at least 2D.
+    y_pred : np.array
+        Array of predicted values.  If must be compatible with y_true'
+    time_axis : int
+        Time axis. All other axes define separate channels.
+
+    Returns
+    -------
+    NRMSE : np.array
+        Array of r_squared value.
+
+    """
+
+    SSE = np.mean((y_pred - y_true)**2, axis=time_axis)
+    RMSE = np.sqrt(SSE)
+    NRMSE = RMSE/np.std(y_true, axis=time_axis)
+    return NRMSE
+
+
 def error_mean(y_true, y_pred, time_axis=0):
     """ Computes the error mean value.
 
