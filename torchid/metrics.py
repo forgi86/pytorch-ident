@@ -1,5 +1,4 @@
 import numpy as np
-#np.array
 
 
 def r_squared(y_true, y_pred, time_axis=0):
@@ -122,12 +121,12 @@ def error_mae(y_true, y_pred, time_axis=0):
 
     Returns
     -------
-    e_mean : np.array
+    e_mae : np.array
         Array of error mean absolute values.
     """
 
-    e_mean = np.mean(np.abs(y_true - y_pred), axis=time_axis)
-    return e_mean
+    e_mae = np.mean(np.abs(y_true - y_pred), axis=time_axis)
+    return e_mae
 
 
 def fit_index(y_true, y_pred, time_axis=0):
