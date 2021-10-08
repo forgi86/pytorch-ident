@@ -129,6 +129,7 @@ def error_mae(y_true, y_pred, time_axis=0):
     e_mean = np.mean(np.abs(y_true - y_pred), axis=time_axis)
     return e_mean
 
+
 def fit_index(y_true, y_pred, time_axis=0):
     """ Computes the per-channel fit index.
 
@@ -148,17 +149,17 @@ def fit_index(y_true, y_pred, time_axis=0):
 
     Returns
     -------
-    fit_val : np.array
-        Array of r_squared value.
+    fit : np.array
+        Array of fit index.
 
     """
 
     err_norm = np.linalg.norm(y_true - y_pred, axis=time_axis, ord=2)  # || y - y_pred ||
     y_mean = np.mean(y_true, axis=time_axis)
-    err_mean_norm = np.linalg.norm(y_true - y_mean, ord=2)  # || y - y_mean ||
-    fit_val = 100*(1 - err_norm/err_mean_norm)
+    err_mean_norm = np.linalg.norm(y_true - y_mean, axis=time_axis, ord=2)  # || y - y_mean ||
+    fit = 100*(1 - err_norm/err_mean_norm)
 
-    return fit_val
+    return fit
 
 
 if __name__ == '__main__':
