@@ -63,7 +63,7 @@ if __name__ == '__main__':
     G2 = SisoLinearDynamicalOperator(n_b, n_a)
 
     def model(u_in):
-        y1_lin = G1(u_fit_torch)
+        y1_lin = G1(u_in)
         y1_nl = F_nl(y1_lin)
         y_hat = G2(y1_nl)
         return y_hat, y1_nl, y1_lin
