@@ -21,8 +21,8 @@ class ForwardEulerSimulator(nn.Module):
         * **input**: tensor of shape :math:`(L, N, n_{u})` when ``batch_first=False`` or
           :math:`(N, L, n_{x})` when ``batch_first=True`` containing the input sequence
 
-    Outputs: x
-        * **x**: tensor of shape :math:`(L, N, n_{x})` corresponding to
+    Outputs: states
+        * **states**: tensor of shape :math:`(L, N, n_{x})` corresponding to
           the simulated state sequence.
 
     Examples::
@@ -44,18 +44,18 @@ class ForwardEulerSimulator(nn.Module):
 
     def forward(self, x_0: torch.Tensor, input: torch.Tensor) -> torch.Tensor:
 
-        x: List[torch.Tensor] = []
+        states: List[torch.Tensor] = []
         x_step = x_0
         dim_time = 1 if self.batch_first else 0
 
         for u_step in input.split(1, dim=dim_time):  # split along the time axis
             u_step = u_step.squeeze(dim_time)
-            x += [x_step]
+            states += [x_step]
             dx = self.ss_model(x_step, u_step)
             x_step = x_step + self.ts*dx
 
-        x = torch.stack(x, dim_time)
-        return x
+        states = torch.stack(states, dim_time)
+        return states
 
 
 class ExplicitRKSimulator(nn.Module):
@@ -143,11 +143,10 @@ class RK4Simulator(nn.Module):
           Runge-Kutta scheme to be used
     """
 
-    def __init__(self, ss_model, ts=1.0, scheme='RK44', device="cpu"):
+    def __init__(self, ss_model, ts=1.0):
         super(RK4Simulator, self).__init__()
         self.ss_model = ss_model
         self.ts = ts
-        self.device = device
 
     def forward(self, x0_batch, u_batch):
         """ Multi-step simulation over (mini)batches
@@ -169,11 +168,10 @@ class RK4Simulator(nn.Module):
 
         X_sim_list = []
         x_step = x0_batch
-        for u_step in u_batch.split(1):#i in range(seq_len):
+        for u_step in u_batch.split(1):
 
             u_step = u_step.squeeze(0)
             X_sim_list += [x_step]
-            #u_step = u_batch[i, :, :]
 
             dt2 = self.ts / 2.0
             k1 = self.ss_model(x_step, u_step)
