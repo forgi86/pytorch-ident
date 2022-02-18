@@ -16,7 +16,9 @@ import matplotlib.pyplot as plt
 
 
 class LSTMFlippedStateEstimator(nn.Module):
-    """ Black-box estimator from u, y to x(0)"""
+    """ Black-box estimator from the sequences of (u, y) to x[0].
+    The estimation is perford by processing (u, y) backward in time.
+    """
     def __init__(self, n_u=1, n_y=1, n_x=2, batch_first=False):
         super(LSTMFlippedStateEstimator, self).__init__()
         self.n_u = n_u

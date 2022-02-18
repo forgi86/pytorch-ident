@@ -43,55 +43,6 @@ class NeuralStateSpaceModel(nn.Module):
         return DX
 
 
-class DeepNeuralStateSpaceModel(nn.Module):
-    r"""A state-space discrete-time model. The state mapping is a neural network with two hidden layers.
-
-
-    Args:
-        n_x (int): Number of state variables
-        n_u (int): Number of input variables
-        n_feat: (int, optional): Number of input features in the two hidden layer. Default:64
-        init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
-        activation: (str): Activation function in the hidden layer. Either 'relu', 'softplus', 'tanh'. Default: 'relu'
-
-    Examples::
-
-        >>> ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
-    """
-
-    n_x: Final[int]
-    n_u: Final[int]
-    n_feat: Final[int]
-
-    def __init__(self, n_x, n_u, n_feat=64, scale_dx=1.0, init_small=True):
-        super(DeepNeuralStateSpaceModel, self).__init__()
-        self.n_x = n_x
-        self.n_u = n_u
-        self.n_feat = n_feat
-        self.scale_dx = scale_dx
-
-        self.net = nn.Sequential(
-            nn.Linear(n_x + n_u, n_feat),  # 2 states, 1 input
-            nn.ReLU(),
-            nn.Linear(n_feat, n_feat),
-            nn.ReLU(),
-            nn.Linear(n_feat, n_x)
-        )
-
-        # Small initialization is better for multi-step methods
-        if init_small:
-            for m in self.net.modules():
-                if isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight, mean=0, std=1e-4)
-                    nn.init.constant_(m.bias, val=0)
-
-    def forward(self, in_x, in_u):
-        in_xu = torch.cat((in_x, in_u), -1)  # concatenate x and u over the last dimension to create the [xu] input
-        dx = self.net(in_xu)  # \dot x = f([xu])
-        dx = dx * self.scale_dx
-        return dx
-
-
 class StateSpaceModelLin(nn.Module):
     r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
     part modeled as a neural network

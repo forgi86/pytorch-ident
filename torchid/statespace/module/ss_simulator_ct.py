@@ -10,47 +10,52 @@ class ForwardEulerSimulator(nn.Module):
     r""" Forward Euler integration of a continuous-time neural state space model.
 
     Args:
-        ss_model (nn.Module): The neural SS model to be fitted
-        ts (np.float): model sampling time
+        ss_model (nn.Module): The neural state-space model.
+        ts (np.float): Sampling time for simulation.
+        batch_first (bool): If True, first dimension is batch.
+
+    Inputs: x_0, input
+        * **x_0**: tensor of shape :math:`(N, n_{x})` containing the
+          initial hidden state for each element in the batch.
+          Defaults to zeros if (h_0, c_0) is not provided.
+        * **input**: tensor of shape :math:`(L, N, n_{u})` when ``batch_first=False`` or
+          :math:`(N, L, n_{x})` when ``batch_first=True`` containing the input sequence
+
+    Outputs: x
+        * **x**: tensor of shape :math:`(L, N, n_{x})` corresponding to
+          the simulated state sequence.
 
     Examples::
 
-        >>> ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+        >>> ss_model = NeuralStateSpaceModel(n_x=3, n_u=2)
         >>> nn_solution = ForwardEulerSimulator(ss_model)
-
+        >>> x0 = torch.randn(64, 3)
+        >>> u = torch.randn(100, 64, 2)
+        >>> x = nn_solution(x0, u)
+        >>> print(x.size())
+        torch.Size([100, 64, 3])
      """
 
-    def __init__(self, ss_model, ts=1.0):
+    def __init__(self, ss_model, ts=1.0, batch_first=False):
         super(ForwardEulerSimulator, self).__init__()
         self.ss_model = ss_model
         self.ts = ts
+        self.batch_first = batch_first
 
-    def forward(self, x0_batch: torch.Tensor, u_batch: torch.Tensor) -> torch.Tensor:
-        r""" Multi-step simulation over (mini)batches
+    def forward(self, x_0: torch.Tensor, input: torch.Tensor) -> torch.Tensor:
 
-        Parameters:
-            x0_batch (Tensor Size: (q, n_x)): Initial state for each subsequence in the minibatch
-            u_batch (Tensor. Size: (m, q, n_u): Input sequence for each subsequence in the minibatch
+        x: List[torch.Tensor] = []
+        x_step = x_0
+        dim_time = 1 if self.batch_first else 0
 
-        Returns:
-            Tensor Size: (m, q, n_x): Simulated state for all subsequences in the minibatch
-
-        Examples::
-
-        >>> y_sim = nn_solution(x0, u)
-        """
-
-        X_sim_list: List[torch.Tensor] = []
-        x_step = x0_batch
-
-        for u_step in u_batch.split(1):  # i in range(seq_len):
-            u_step = u_step.squeeze(0)
-            X_sim_list += [x_step]
+        for u_step in input.split(1, dim=dim_time):  # split along the time axis
+            u_step = u_step.squeeze(dim_time)
+            x += [x_step]
             dx = self.ss_model(x_step, u_step)
             x_step = x_step + self.ts*dx
 
-        X_sim = torch.stack(X_sim_list, 0)
-        return X_sim
+        x = torch.stack(x, dim_time)
+        return x
 
 
 class ExplicitRKSimulator(nn.Module):
@@ -67,7 +72,7 @@ class ExplicitRKSimulator(nn.Module):
           Runge-Kutta scheme to be used
     """
 
-    def __init__(self, ss_model, ts=1.0, scheme='RK44', device="cpu"):
+    def __init__(self, ss_model, ts=1.0, scheme='RK44'):
         super(ExplicitRKSimulator, self).__init__()
         self.ss_model = ss_model
         self.ts = ts
@@ -76,7 +81,6 @@ class ExplicitRKSimulator(nn.Module):
         self.b = torch.FloatTensor(info_RK.b.astype(np.float32))
         self.c = torch.FloatTensor(info_RK.c.astype(np.float32))
         self.stages = self.b.numel()  # number of stages of the rk method
-        self.device = device
 
     def forward(self, x0_batch, u_batch):
         """ Multi-step simulation over (mini)batches

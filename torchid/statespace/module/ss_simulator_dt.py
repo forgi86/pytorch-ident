@@ -1,115 +1,51 @@
 import torch
 import torch.nn as nn
-import numpy as np
- 
+from typing import List
+
         
 class NeuralStateSpaceSimulator(object):
-    """ This class implements prediction/simulation methods for the SS model structure
+    r""" Discrete-time state-space simulator.
 
-     Attributes
-     ----------
-     ss_model: nn.Module
-               The neural SS model to be fitted
-     Ts: float
-         model sampling time
+    Args:
+        ss_model (nn.Module): The neural state-space model.
+        batch_first (bool): If True, first dimension is batch.
 
+    Inputs: x_0, input
+        * **x_0**: tensor of shape :math:`(N, n_{x})` containing the
+          initial hidden state for each element in the batch.
+          Defaults to zeros if (h_0, c_0) is not provided.
+        * **input**: tensor of shape :math:`(L, N, n_{u})` when ``batch_first=False`` or
+          :math:`(N, L, n_{x})` when ``batch_first=True`` containing the input sequence
+
+    Outputs: x
+        * **x**: tensor of shape :math:`(L, N, n_{x})` corresponding to
+          the simulated state sequence.
+
+    Examples::
+
+        >>> ss_model = NeuralStateSpaceModel(n_x=3, n_u=2)
+        >>> nn_solution = NeuralStateSpaceSimulator(ss_model)
+        >>> x0 = torch.randn(64, 3)
+        >>> u = torch.randn(100, 64, 2)
+        >>> x = nn_solution(x0, u)
+        >>> print(x.size())
+        torch.Size([100, 64, 3])
      """
 
-    def __init__(self, ss_model, Ts=1.0):
+    def __init__(self, ss_model):
         self.ss_model = ss_model
-        self.Ts = Ts
 
-    def f_onestep(self, X, U):
-        """ Naive one-step prediction
+    def forward(self, x_0, input):
 
-        Parameters
-        ----------
-        X : Tensor. Size: (N, n_x)
-            State sequence tensor
+        x: List[torch.Tensor] = []
+        x_step = x_0
+        dim_time = 1 if self.batch_first else 0
 
-        U : Tensor. Size: (N, n_u)
-            Input sequence tensor
+        for u_step in input.split(1, dim=dim_time):  # split along the time axis
+            u_step = u_step.squeeze(dim_time)
+            x += [x_step]
+            dx = self.ss_model(x_step, u_step)
+            x_step = x_step + dx
 
-        Returns
-        -------
-        Tensor. Size: (N, n_x)
-            One-step prediction over N steps
-
-        """
-
-        X_pred = torch.empty(X.shape)
-        X_pred[0, :] = X[0, :]
-        DX = self.ss_model(X[0:-1], U[0:-1])
-        X_pred[1:,:] = X[0:-1, :] + DX
-
-        return X_pred
-
-    def f_sim(self, x0, u):
-        """ Open-loop simulation
-
-        Parameters
-        ----------
-        x0 : Tensor. Size: (n_x)
-             Initial state
-
-        U : Tensor. Size: (N, n_u)
-            Input sequence tensor
-
-        Returns
-        -------
-        Tensor. Size: (N, n_x)
-            Open-loop model simulation over N steps
-
-        """
-
-        N = np.shape(u)[0]
-        nx = np.shape(x0)[0]
-
-        X_list = []
-        xstep = x0
-        for i in range(N):
-            X_list += [xstep]
-            #X[i,:] = xstep
-            ustep = u[i]
-            dx = self.ss_model(xstep, ustep)
-            xstep = xstep + dx
-
-        X = torch.stack(X_list, 0)
-
-        return X
-
-    def f_sim_multistep(self, x0_batch, U_batch):
-        """ Multi-step simulation over (mini)batches
-
-        Parameters
-        ----------
-        x0_batch: Tensor. Size: (q, n_x)
-             Initial state for each subsequence in the minibatch
-
-        U_batch: Tensor. Size: (q, m, n_u)
-            Input sequence for each subsequence in the minibatch
-
-        Returns
-        -------
-        Tensor. Size: (q, m, n_x)
-            Simulated state for all subsequences in the minibatch
-
-        """
-
-        batch_size = x0_batch.shape[0]
-        n_x = x0_batch.shape[1]
-        seq_len = U_batch.shape[1]
-
-        X_sim_list = []
-        xstep = x0_batch
-        for i in range(seq_len):
-            X_sim_list += [xstep] #X_sim[:, i, :] = xstep
-            ustep = U_batch[:, i, :]
-            dx = self.ss_model(xstep, ustep)
-            xstep = xstep + dx
-
-        X_sim = torch.stack(X_sim_list, 1)#.squeeze(2)
-        return X_sim
-
-#    def f_residual_fullyobserved(self, X_batch, U_batch):
-#        X_increment = X_batch[:, -1, :] - X_batch[:, 0, :]
+        x = torch.stack(x, dim_time)
+        return x
