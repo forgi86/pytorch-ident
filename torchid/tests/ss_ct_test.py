@@ -3,16 +3,18 @@ from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
 from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
 
 
-L = 100  # sequence length
-N = 64  # batch size
-n_x = 2  # states
-n_u = 3
+
 
 
 def test_batchfirst():
     """Test batch-first option of ForwardEulerSimulator"""
 
-    ss_model = NeuralStateSpaceModel(n_x=n_x, n_u=n_u, n_feat=50)
+    L = 100  # sequence length
+    N = 64  # batch size
+    n_x = 2  # states
+    n_u = 3
+
+    ss_model = NeuralStateSpaceModel(n_x=n_x, n_u=n_u)
     nn_solution = ForwardEulerSimulator(ss_model)  # batch_first=False, thus time_first, default
     nn_solution_bf = ForwardEulerSimulator(ss_model, batch_first=True)
 
