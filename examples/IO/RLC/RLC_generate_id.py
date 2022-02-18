@@ -6,7 +6,7 @@ import control.matlab
 import pandas as pd
 import os
 
-from examples.statespace.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_mod
+from examples.statespace.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_nl
 
 if __name__ == '__main__':
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     def f_ODE_mod(t,x):
         u = u_func(t).ravel()
-        return fxu_ODE_mod(t, x, u)
+        return fxu_ODE_nl(t, x, u)
 
 
     x0 = np.zeros(2)
