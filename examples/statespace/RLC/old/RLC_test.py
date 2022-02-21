@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
-from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
+from torchid.ss.ct.ssmodels_ct import NeuralStateSpaceModel
+from torchid.ss.ct.ss_simulator_ct import ForwardEulerSimulator
 import torchid.metrics as metrics
 
 if __name__ == '__main__':
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)#, scale_dx=scale_dx)
     nn_solution = ForwardEulerSimulator(ss_model, ts=ts_integ)
     model_filename = f"model_SS_{model_type}.pt"
-    nn_solution.ss_model.load_state_dict(torch.load(os.path.join("models", model_filename)))
+    nn_solution.f_xu.load_state_dict(torch.load(os.path.join("models", model_filename)))
 
     # Evaluate the model in open-loop simulation against validation data
     x_0 = x_meas_val[0, :]

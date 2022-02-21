@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
-from torchid.statespace.module.poly_utils import valid_coeffs
+from torchid.ss.poly_utils import valid_coeffs
 
 
-class NeuralStateSpaceModel(nn.Module):
+class NeuralStateUpdate(nn.Module):
 
     r"""A state-space discrete-time model. The state mapping is a neural network with one hidden layer.
 
@@ -16,11 +16,11 @@ class NeuralStateSpaceModel(nn.Module):
 
     Examples::
 
-        >>> ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+        >>> ss_model = NeuralStateUpdate(n_x=2, n_u=1, n_feat=64)
     """
 
     def __init__(self, n_x, n_u, n_feat=64, init_small=True):
-        super(NeuralStateSpaceModel, self).__init__()
+        super(NeuralStateUpdate, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
         self.n_feat = n_feat
@@ -42,7 +42,7 @@ class NeuralStateSpaceModel(nn.Module):
         return DX
 
 
-class PolynomialStateSpaceModel(nn.Module):
+class PolynomialStateUpdate(nn.Module):
     r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
     part modeled as a neural network
 
@@ -53,17 +53,32 @@ class PolynomialStateSpaceModel(nn.Module):
 
     """
 
-    def __init__(self, n_x, n_u, d_max):
-        super(PolynomialStateSpaceModel, self).__init__()
+    def __init__(self, n_x, n_u, d_max, init_small=True):
+        super(PolynomialStateUpdate, self).__init__()
 
+        self.n_x = n_x
+        self.n_u = n_u
         poly_coeffs = valid_coeffs(n_x + n_u, d_max)
         self.n_poly = len(poly_coeffs)
         self.poly_coeffs = torch.tensor(poly_coeffs)
         self.A = nn.Linear(n_x, n_x, bias=False)
         self.B = nn.Linear(n_u, n_x, bias=False)
-        #self.D = torch.randn(n_y, n_u)
-        self.E = torch.randn(n_x, self.n_poly)
-        #self.F = torch.randn(n_y, self.n_poly)
+        #self.D = nn.linear(n_u, n_y, bias=False)
+        self.E = nn.Linear(self.n_poly, n_x, bias=False)
+        #self.F = nn.linear(self.n_poly, n_y)
+
+        if init_small:
+            nn.init.normal_(self.A.weight, mean=0, std=1e-3)
+            nn.init.normal_(self.B.weight, mean=0, std=1e-3)
+            nn.init.normal_(self.E.weight, mean=0, std=1e-6)
+
+                # nn.init.constant_(module.bias, val=0)
+
+    def freeze_nl(self):
+        self.E.requires_grad_(False)
+
+    def unfreeze_nl(self):
+        self.E.requires_grad_(True)
 
     def forward(self, x, u):
         xu = torch.cat((x, u), dim=-1)
@@ -75,7 +90,36 @@ class PolynomialStateSpaceModel(nn.Module):
         return dx
 
 
-class CTSNeuralStateSpaceModel(nn.Module):
+class LinearStateUpdate(nn.Module):
+    r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
+    part modeled as a neural network
+
+    Args:
+        n_x: (np.array): Number of states.
+        n_u: (np.array): Number of inputs.
+        d_max (int): Maximum degree of the polynomial model.
+
+    """
+
+    def __init__(self, n_x, n_u, init_small=True):
+        super(LinearStateUpdate, self).__init__()
+
+        self.n_x = n_x
+        self.n_u = n_u
+        self.A = nn.Linear(n_x, n_x, bias=False)
+        self.B = nn.Linear(n_u, n_x, bias=False)
+
+        if init_small:
+            for module in [self.A, self.B]:
+                nn.init.normal_(module.weight, mean=0, std=1e-2)
+                # nn.init.constant_(module.bias, val=0)
+
+    def forward(self, x, u):
+        dx = self.A(x) + self.B(u)
+        return dx
+
+
+class CTSNeuralStateSpace(nn.Module):
     r"""A state-space model to represent the cascaded two-tank system.
     Args:
         n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
@@ -84,7 +128,7 @@ class CTSNeuralStateSpaceModel(nn.Module):
     """
 
     def __init__(self, n_x, n_u, n_feat=64, init_small=True):
-        super(CTSNeuralStateSpaceModel, self).__init__()
+        super(CTSNeuralStateSpace, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
         self.n_feat = n_feat
@@ -104,3 +148,24 @@ class CTSNeuralStateSpaceModel(nn.Module):
         XU = torch.cat((X, U), -1)
         DX = self.net(XU)
         return DX
+
+
+class LinearOutput(nn.Module):
+    def __init__(self, n_x, n_y, bias=False):
+        super(LinearOutput, self).__init__()
+        self.n_x = n_x
+        self.n_y = n_y
+        self.C = torch.nn.Linear(n_x, n_y, bias=bias)
+
+    def forward(self, x):
+        return self.C(x)
+
+
+class ChannelsOutput(nn.Module):
+    def __init__(self, channels):
+        super(ChannelsOutput, self).__init__()
+        self.channels = channels
+
+    def forward(self, x):
+        y = x[..., self.channels]
+        return y

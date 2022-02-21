@@ -5,8 +5,8 @@ import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
 import os
-from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
-from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
+from torchid.ss.dt.models import NeuralStateUpdate
+from torchid.ss.dt.simulator import StateSpaceSimulator
 
 if __name__ == '__main__':
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "RLC_data_id.csv"))
+    df_X = pd.read_csv(os.path.join("data", "RLC_data_train_lin.csv"))
     time_data = np.array(df_X[COL_T], dtype=np.float32)
     x = np.array(df_X[COL_X], dtype=np.float32)
     u = np.array(df_X[COL_U], dtype=np.float32)
@@ -57,11 +57,11 @@ if __name__ == '__main__':
     x_fit_torch = torch.from_numpy(x_fit)
 
     # Setup neural model structure
-    ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
-    nn_solution = ForwardEulerSimulator(ss_model)
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=64)
+    model = StateSpaceSimulator(f_xu)
 
     # Setup optimizer
-    optimizer = optim.Adam(nn_solution.ss_model.parameters(), lr=lr)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     # Scale loss with respect to the initial one
     with torch.no_grad():
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Perform one-step ahead prediction
-        DX_pred = ts_integ * ss_model(x_fit_torch[0:-1, :], u_fit_torch[0:-1, :])
+        DX_pred = ts_integ * f_xu(x_fit_torch[0:-1, :], u_fit_torch[0:-1, :])
         DX = x_fit_torch[1:, :] - x_fit_torch[0:-1, :]
 
         err = DX - DX_pred
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     else:
         model_filename = "model_SS_1step_nonoise.pt"
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    torch.save(model.state_dict(), os.path.join("models", model_filename))
 
 
     # In[Plot loss]
@@ -139,11 +139,11 @@ if __name__ == '__main__':
 
     time_start = time.time()
     with torch.no_grad():
-        x_sim_torch_val = nn_solution(x0_torch_val[None, :], u_torch_val[:, None, :])
+        x_sim_torch_val = model(x0_torch_val[None, :], u_torch_val[:, None, :])
         x_sim_torch_val = x_sim_torch_val.squeeze(1)
 
     x_sim = np.array(x_sim_torch_val)
-    fig, ax = plt.subplots(2,1,sharex=True)
+    fig, ax = plt.subplots(2, 1, sharex=True)
     ax[0].plot(x_val[:, 0], 'k+', label='True')
     ax[0].plot(x_sim[:, 0], 'r', label='Sim')
     ax[0].legend()

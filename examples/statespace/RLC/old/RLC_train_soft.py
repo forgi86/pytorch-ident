@@ -5,8 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
-from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
+from torchid.ss.ct.ssmodels_ct import NeuralStateSpaceModel
+from torchid.ss.ct.ss_simulator_ct import ForwardEulerSimulator
 
 
 # Soft-constrained integration method

@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
     # In[Metrics]
     idx_test = range(t_test_start + t_skip, t_test_end)
-    e_rms = 1000 * metrics.error_rmse(y_meas[idx_test], y_hat[idx_test])[0]
+    e_rms = 1000 * metrics.rmse(y_meas[idx_test], y_hat[idx_test])[0]
     fit_idx = metrics.fit_index(y_meas[idx_test], y_hat[idx_test])[0]
     r_sq = metrics.r_squared(y_meas[idx_test], y_hat[idx_test])[0]
 

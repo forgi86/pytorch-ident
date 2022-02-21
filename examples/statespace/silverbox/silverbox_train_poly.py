@@ -1,63 +1,59 @@
-"""
-Use an LSTM encoder network to estimate the initial state (backward in time), then simulate it forward in time.
-Overall, the combination of state_estimator + nn_solution may be seen as an autoencoder.
-"""
-
-
 import os
 import time
-import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-from torchid.ss.dt.models import NeuralStateUpdate, ChannelsOutput
+from torchid.datasets import SubsequenceDataset
+from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import FlippedLSTMStateEstimator
-from torchid.datasets import SubsequenceDataset
-from loader import rlc_loader
+from loader import silverbox_loader
+import matplotlib.pyplot as plt
 
 
-# Truncated simulation error minimization method
 if __name__ == '__main__':
 
-    # Set seed for reproducibility
-    np.random.seed(0)
-    torch.manual_seed(0)
-
-    # Overall parameters
-    epochs = 100  # gradient-based optimization steps
-    seq_len = 64  # subsequence length m
-    batch_size = 32  # batch size q
-    lr = 1e-4  # learning rate
-    n_fit = 5000
+    # Parameters
+    n_fit = 40000
+    subseq_len = 256
+    batch_size = 64
+    lr = 1e-5
+    epochs = 10
+    n_x = 2
+    n_u = 1
+    n_y = 1
+    d_max = 3
 
     # Load dataset
-    t, u, y, x = rlc_loader("train", "nl", noise_std=0.1, n_data=n_fit)
+    t_train, u_train, y_train = silverbox_loader("train", scale=True)
 
-    # Setup neural model structure
-    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=50)
-    g_x = ChannelsOutput(channels=[0])  # output is channel 0
+    #%% Prepare dataset
+    train_data = SubsequenceDataset(u_train, y_train, subseq_len)
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+
+    f_xu = PolynomialStateUpdate(n_x, n_u, d_max)
+    g_x = LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
     state_estimator = FlippedLSTMStateEstimator(n_u=1, n_y=1, n_x=2)
 
-    train_dataset = SubsequenceDataset(torch.from_numpy(u), torch.from_numpy(y), subseq_len=seq_len)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
     # Setup optimizer
     optimizer = optim.Adam([
-        {'params': model.parameters(), 'lr': lr},
-        {'params': state_estimator.parameters(), 'lr': lr},
+        {'params': model.parameters(), 'lr': 1e-3},
+        {'params': state_estimator.parameters(), 'lr': 1e-3},
     ], lr=lr)
 
     LOSS = []
     LOSS_CONSISTENCY = []
     LOSS_FIT = []
+
     start_time = time.time()
+
     # Training loop
-
+    itr = 0
+    model.state_update.freeze_nl()
     for epoch in range(epochs):
-
+        if epoch >= 5:
+            model.state_update.unfreeze_nl()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 
@@ -67,13 +63,10 @@ if __name__ == '__main__':
 
             batch_x0 = state_estimator(batch_u, batch_y)
             batch_y_sim = model(batch_x0, batch_u)
-            #batch_y_sim = batch_x_sim[..., [0]]
 
-            # Compute consistency loss
+            # Compute autoencoder loss
             err_ae = batch_y - batch_y_sim
             loss_ae = torch.mean(err_ae**2)
-
-            # Compute trade-off loss
             loss = loss_ae
 
             # Statistics
@@ -82,6 +75,10 @@ if __name__ == '__main__':
             # Optimize
             loss.backward()
             optimizer.step()
+
+            if itr % 10 == 0:
+                print(f'Iteration {itr} | AE Loss {loss:.4f} ')
+            itr += 1
 
         print(f'Epoch {epoch} | AE Loss {loss:.4f} ')
 
@@ -94,21 +91,23 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
-    model_filename = "ss_model_ae.pt"
-    torch.save({"model": model.state_dict(),
-                "estimator": state_estimator
+    model_filename = "ss_poly.pt"
+    torch.save({"n_x": n_x,
+                "n_y": n_y,
+                "n_u": n_u,
+                "d_max": d_max,
+                "model": model.state_dict(),
+                "estimator": state_estimator.state_dict()
                 },
                os.path.join("models", model_filename))
 
-    n_val = n_fit
-
     #%% Simulate
+    t_full, u_full, y_full = silverbox_loader("full", scale=True)
     with torch.no_grad():
-        u_v = torch.tensor(u[:, None, :])
-        y_v = torch.tensor(y[:, None, :])
+        u_v = torch.tensor(u_full[:, None, :])
+        y_v = torch.tensor(y_full[:, None, :])
         x0 = state_estimator(u_v, y_v)
-        y_sim = model(x0, u_v)
-
+        y_sim = model(x0, u_v).squeeze(1)
 
     #%% Test
     fig, ax = plt.subplots(1, 1)
@@ -119,6 +118,6 @@ if __name__ == '__main__':
     ax.set_xlabel("Iteration (-)")
 
     fig, ax = plt.subplots(1, 1, sharex=True)
-    ax.plot(y_v[:, 0, 0], 'k', label='meas')
+    ax.plot(y_full[:, 0], 'k', label='meas')
     ax.grid(True)
-    ax.plot(y_sim[:, 0, 0], 'b', label='sim')
+    ax.plot(y_sim[:, 0], 'b', label='sim')

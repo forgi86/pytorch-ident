@@ -28,7 +28,7 @@ def r_squared(y_true, y_pred, time_axis=0):
     return 1.0 - SSE/SST
 
 
-def error_rmse(y_true, y_pred, time_axis=0):
+def rmse(y_true, y_pred, time_axis=0):
     """ Computes the Root Mean Square Error (RMSE).
 
     The RMSE index is computed separately on each channel.
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     SNR = 10
     y_true = SNR*np.random.randn(N, 2)
     y_pred = np.copy(y_true) + np.random.randn(N, 2)
-    err_rmse_val = error_rmse(y_pred, y_true)
+    err_rmse_val = rmse(y_pred, y_true)
     r_squared_val = r_squared(y_true, y_pred)
     fit_val = fit_index(y_true, y_pred)
 

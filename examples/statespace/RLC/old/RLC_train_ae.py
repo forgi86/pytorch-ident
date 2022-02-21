@@ -9,9 +9,9 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.optim as optim
-from torchid.statespace.module.models import NeuralStateSpaceModel
-from torchid.statespace.module.simulator import StateSpaceSimulator
-from torchid.statespace.module.estimators import FlippedLSTMStateEstimator
+from torchid.ss.ct.models import NeuralStateUpdate
+from torchid.ss.ct.simulator import StateSpaceSimulator
+from torchid.ss.ct.estimators import FlippedLSTMStateEstimator
 import matplotlib.pyplot as plt
 
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     # Setup neural model structure
     state_estimator = FlippedLSTMStateEstimator(n_u=1, n_y=1, n_x=2)
     # Setup neural model structure
-    ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=50)
+    ss_model = NeuralStateUpdate(n_x=2, n_u=1, n_feat=50)
     nn_solution = StateSpaceSimulator(ss_model)
 
     # Setup optimizer

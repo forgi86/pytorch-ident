@@ -6,8 +6,8 @@ import os
 import sys
 
 sys.path.append(os.path.join("../..", ".."))
-from torchid.statespace.module.ss_simulator_dt import StateSpaceSimulator
-from torchid.statespace.module.ssmodels_dt import CTSNeuralStateSpaceModel
+from torchid.ss.ct.ss_simulator_dt import StateSpaceSimulator
+from torchid.ss.ct.ssmodels_dt import CTSNeuralStateSpaceModel
 from examples.util import metrics
 
 if __name__ == '__main__':

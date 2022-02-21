@@ -5,8 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-from torchid.statespace.module.simulator import StateSpaceSimulator
-from torchid.statespace.module.models import CTSNeuralStateSpaceModel
+from torchid.ss.ct.simulator import StateSpaceSimulator
+from torchid.ss.ct.models import CTSNeuralStateSpace
 
 
 if __name__ == '__main__':
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     time_fit = time_exp
 
     # Setup neural model structure
-    ss_model = CTSNeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+    ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
     nn_solution = StateSpaceSimulator(ss_model)
 
     model_name = 'model_SS_256step'
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     model_filename = f"model_SS_{'simerr'}.pkl"
     hidden_filename = f"hidden_SS_{'simerr'}.pkl"
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.f_xu.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     # Plot figures

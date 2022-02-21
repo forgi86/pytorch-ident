@@ -32,10 +32,10 @@ class StateSpaceSimulator(nn.Module):
         torch.Size([100, 64, 3])
      """
 
-    def __init__(self, f_xu, g_xu=None, batch_first=False):
+    def __init__(self, f_xu, g_x=None, batch_first=False):
         super().__init__()
         self.state_update = f_xu
-        self.output = g_xu
+        self.output = g_x
         self.batch_first = batch_first
 
     def simulate_state(self, x_0, u):
