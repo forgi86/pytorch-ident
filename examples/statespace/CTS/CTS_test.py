@@ -3,11 +3,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import os
-import sys
-
-sys.path.append(os.path.join("../..", ".."))
-from torchid.ss.ct.ss_simulator_dt import StateSpaceSimulator
-from torchid.ss.ct.ssmodels_dt import CTSNeuralStateSpaceModel
+from torchid.ss.dt.simulator import StateSpaceSimulator
+from torchid.ss.dt.models import CTSNeuralStateSpace
 from examples.util import metrics
 
 if __name__ == '__main__':

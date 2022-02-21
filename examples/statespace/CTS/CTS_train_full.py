@@ -5,8 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-from torchid.ss.ct.simulator import StateSpaceSimulator
-from torchid.ss.ct.models import CTSNeuralStateSpace
+from torchid.ss.dt.simulator import StateSpaceSimulator
+from torchid.ss.dt.models import CTSNeuralStateSpace
 
 
 if __name__ == '__main__':
@@ -59,17 +59,16 @@ if __name__ == '__main__':
     # Scale loss with respect to the initial one
     with torch.no_grad():
         x0_torch = x_hidden_fit[0, :]
-        x_est_torch = nn_solution.f_sim(x0_torch, u_fit_torch)
+        x_est_torch = nn_solution(x0_torch, u_fit_torch)
         err_init = x_est_torch[:, [0]] - y_fit_torch
-        scale_error = torch.sqrt(torch.mean((err_init)**2, dim=(0)))
+        scale_error = torch.sqrt(torch.mean(err_init**2, dim=0))
 
     LOSS_TOT = []
     LOSS_FIT = []
     LOSS_CONSISTENCY = []
     start_time = time.time()
-    # Training loop
 
-    #scripted_nn_solution = torch.jit.script(nn_solution)
+    # Training loop
     for itr in range(0, num_iter):
 
         optimizer.zero_grad()
@@ -77,7 +76,7 @@ if __name__ == '__main__':
         x0_torch = x_hidden_fit[0, :]
 
         # Perform open-loop simulation
-        x_sim = nn_solution.f_sim(x0_torch, u_fit_torch)
+        x_sim = nn_solution(x0_torch, u_fit_torch)
 
         # Compute fit loss
         err_fit = x_sim[:, [0]] - y_fit_torch

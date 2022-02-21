@@ -5,8 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-from torchid.ss.ct.simulator import StateSpaceSimulator
-from torchid.ss.ct.models import CTSNeuralStateSpace
+from torchid.ss.dt.simulator import StateSpaceSimulator
+from torchid.ss.dt.models import CTSNeuralStateSpace
 
 
 if __name__ == '__main__':
