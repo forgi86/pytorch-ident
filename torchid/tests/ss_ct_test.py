@@ -3,9 +3,6 @@ from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
 from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
 
 
-
-
-
 def test_batchfirst():
     """Test batch-first option of ForwardEulerSimulator"""
 

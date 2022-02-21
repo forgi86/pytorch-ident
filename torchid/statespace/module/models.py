@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-import numpy as np
-from torch.jit import Final
+from torchid.statespace.module.poly_utils import valid_coeffs
 
 
 class NeuralStateSpaceModel(nn.Module):
@@ -43,46 +42,52 @@ class NeuralStateSpaceModel(nn.Module):
         return DX
 
 
-class StateSpaceModelLin(nn.Module):
+class PolynomialStateSpaceModel(nn.Module):
     r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
     part modeled as a neural network
 
     Args:
-        A: (np.array): A matrix of the linear part of the model
-        B: (np.array): B matrix of the linear part of the model
+        n_x: (np.array): Number of states.
+        n_u: (np.array): Number of inputs.
+        d_max (int): Maximum degree of the polynomial model.
 
     """
 
-    def __init__(self, AL, BL):
-        super(StateSpaceModelLin, self).__init__()
+    def __init__(self, n_x, n_u, d_max):
+        super(PolynomialStateSpaceModel, self).__init__()
 
-        self.AL = nn.Linear(2, 2, bias=False)
-        self.AL.weight = torch.nn.Parameter(torch.tensor(AL.astype(np.float32)), requires_grad=False)
-        self.BL = nn.Linear(1, 2, bias=False)
-        self.BL.weight = torch.nn.Parameter(torch.tensor(BL.astype(np.float32)), requires_grad=False)
-    
-    def forward(self, X, U):
-        DX = self.AL(X) + self.BL(U)
-        return DX   
+        poly_coeffs = valid_coeffs(n_x + n_u, d_max)
+        self.n_poly = len(poly_coeffs)
+        self.poly_coeffs = torch.tensor(poly_coeffs)
+        self.A = nn.Linear(n_x, n_x, bias=False)
+        self.B = nn.Linear(n_u, n_x, bias=False)
+        #self.D = torch.randn(n_y, n_u)
+        self.E = torch.randn(n_x, self.n_poly)
+        #self.F = torch.randn(n_y, self.n_poly)
+
+    def forward(self, x, u):
+        xu = torch.cat((x, u), dim=-1)
+        xu_ = xu.unsqueeze(xu.ndim - 1)
+        zeta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
+        #eta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
+
+        dx = self.A(x) + self.B(u) + self.E(zeta)
+        return dx
 
 
 class CTSNeuralStateSpaceModel(nn.Module):
     r"""A state-space model to represent the cascaded two-tank system.
-
-
     Args:
         n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
         scale_dx: (str): Scaling factor for the neural network output. Default: 1.0
         init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
-
     """
 
-    def __init__(self, n_x, n_u, n_feat=64, ts=1.0, init_small=True):
+    def __init__(self, n_x, n_u, n_feat=64, init_small=True):
         super(CTSNeuralStateSpaceModel, self).__init__()
         self.n_x = n_x
         self.n_u = n_u
         self.n_feat = n_feat
-        self.ts = ts
         self.net = nn.Sequential(
             nn.Linear(n_x + n_u, n_feat),  # 2 states, 1 input
             nn.ReLU(),
@@ -97,5 +102,5 @@ class CTSNeuralStateSpaceModel(nn.Module):
 
     def forward(self, X, U):
         XU = torch.cat((X, U), -1)
-        DX = self.net(XU) * self.ts
+        DX = self.net(XU)
         return DX

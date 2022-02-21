@@ -6,7 +6,7 @@ import os
 import sys
 
 sys.path.append(os.path.join("../..", ".."))
-from torchid.statespace.module.ss_simulator_dt import NeuralStateSpaceSimulator
+from torchid.statespace.module.ss_simulator_dt import StateSpaceSimulator
 from torchid.statespace.module.ssmodels_dt import CTSNeuralStateSpaceModel
 from examples.util import metrics
 
@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     # Setup neural model structure
     ss_model = CTSNeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64, ts=ts)
-    nn_solution = NeuralStateSpaceSimulator(ss_model)
-    nn_solution.ss_model.load_state_dict(torch.load(os.path.join("models", model_name + ".pkl")))
+    nn_solution = StateSpaceSimulator(ss_model)
+    nn_solution.f_xu.load_state_dict(torch.load(os.path.join("models", model_name + ".pkl")))
     x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pkl"))
 
     # Evaluate the model in open-loop simulation against validation data

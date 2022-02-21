@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use("TkAgg")
 import os
 import pandas as pd
 import numpy as np
@@ -7,10 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-import sys
-sys.path.append(os.path.join("../..", ".."))
-from torchid.statespace.module.ss_simulator_dt import NeuralStateSpaceSimulator
-from torchid.statespace.module.ssmodels_dt import CTSNeuralStateSpaceModel
+from torchid.statespace.module.simulator import StateSpaceSimulator
+from torchid.statespace.module.models import CTSNeuralStateSpaceModel
 
 
 if __name__ == '__main__':
@@ -43,17 +39,17 @@ if __name__ == '__main__':
     time_fit = time_exp
 
     # Setup neural model structure
-    ss_model = CTSNeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64, ts=ts)
-    nn_solution = NeuralStateSpaceSimulator(ss_model)
+    ss_model = CTSNeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
+    nn_solution = StateSpaceSimulator(ss_model)
 
     model_name = 'model_SS_256step'
     hidden_name = 'hidden_SS_256step'
-    nn_solution.ss_model.load_state_dict(torch.load(os.path.join("models", model_name + ".pkl")))
-    x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pkl"))
+    #nn_solution.load_state_dict(torch.load(os.path.join("models", model_name + ".pkl")))
+    #x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pkl"))
 
 
     # Setup optimizer
-    params_net = list(nn_solution.ss_model.parameters())
+    params_net = list(nn_solution.parameters())
     params_hidden = [x_hidden_fit]
     optimizer = optim.Adam([
         {'params': params_net,    'lr': lr},
@@ -64,7 +60,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         x0_torch = x_hidden_fit[0, :]
         x_est_torch = nn_solution.f_sim(x0_torch, u_fit_torch)
-        err_init = x_est_torch[:, [0]]  - y_fit_torch
+        err_init = x_est_torch[:, [0]] - y_fit_torch
         scale_error = torch.sqrt(torch.mean((err_init)**2, dim=(0)))
 
     LOSS_TOT = []

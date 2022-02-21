@@ -124,7 +124,7 @@ if __name__ == '__main__':
         model_filename = f"model_SS_fullsim_nonoise.pkl"
         hidden_filename = f"hidden_SS_fullsim_nonoise.pkl"
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.f_xu.state_dict(), os.path.join("models", model_filename))
 
 
     # In[Simulate]
