@@ -129,7 +129,7 @@ if __name__ == '__main__':
     model_filename =  f"model_SS_{seq_len}step.pt"
     hidden_filename = f"hidden_SS_{seq_len}step.pt"
 
-    torch.save(nn_solution.f_xu.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.state_update.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     # Plot figures
@@ -166,14 +166,13 @@ if __name__ == '__main__':
     y_val = np.copy(y_fit)
     u_val = np.copy(u_fit)
 
-    #x0_val = np.array(x_est[0, :])
-    #x0_val[1] = 0.0
-    x0_val = x_hidden_fit[0, :].detach().numpy() # initial state had to be estimated, according to the dataset description
+    # initial state had to be estimated, according to the dataset description
+    x0_val = x_hidden_fit[0, :].detach().numpy()
     x0_torch_val = torch.from_numpy(x0_val)
     u_torch_val = torch.tensor(u_val)
 
     with torch.no_grad():
-        x_sim_torch = nn_solution.f_sim(x0_torch_val[None, :], u_torch_val[:, None, :])
+        x_sim_torch = nn_solution(x0_torch_val[None, :], u_torch_val[:, None, :])
         y_sim_torch = x_sim_torch[:, 0]
         x_sim = y_sim_torch.detach().numpy()
 

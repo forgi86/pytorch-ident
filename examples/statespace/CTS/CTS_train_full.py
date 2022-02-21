@@ -97,7 +97,7 @@ if __name__ == '__main__':
         optimizer.step()
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}") # 182 seconds
+    print(f"\nTrain time: {train_time:.2f}")
 
     if not os.path.exists("models"):
         os.makedirs("models")
@@ -106,10 +106,10 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
-    model_filename = f"model_SS_{'simerr'}.pkl"
-    hidden_filename = f"hidden_SS_{'simerr'}.pkl"
+    model_filename = f"model_SS_full.pt"
+    hidden_filename = f"hidden_SS_full.pt"
 
-    torch.save(nn_solution.f_xu.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.state_update.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     # Plot figures
@@ -137,7 +137,6 @@ if __name__ == '__main__':
     ax[0].legend()
     ax[0].grid(True)
 
-    #ax[1].plot(x_est[:, 1], 'k', label='Estimated')
     ax[1].plot(x_hidden_fit_np[:, 1], 'r', label='Hidden')
     ax[1].legend()
     ax[1].grid(True)
@@ -146,21 +145,17 @@ if __name__ == '__main__':
     y_val = np.copy(y_fit)
     u_val = np.copy(u_fit)
 
-    #x0_val = np.array(x_est[0, :])
-    #x0_val[1] = 0.0
     x0_val = x_hidden_fit[0, :].detach().numpy() # initial state had to be estimated, according to the dataset description
     x0_torch_val = torch.from_numpy(x0_val)
     u_torch_val = torch.tensor(u_val)
 
     with torch.no_grad():
-        x_sim_torch = nn_solution.f_sim(x0_torch_val[None, :], u_torch_val[:, None, :])
+        x_sim_torch = nn_solution(x0_torch_val[None, :], u_torch_val[:, None, :])
         y_sim_torch = x_sim_torch[:, 0]
         x_sim = y_sim_torch.detach().numpy()
 
-
     # Simulation plot
     fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 7.5))
-    #ax[0].plot(time_exp, q_ref,  'k',  label='$q_{\mathrm{ref}}$')
     ax[0].plot(time_exp, y_val, 'k', label='$y_{\mathrm{meas}}$')
     ax[0].plot(time_exp, x_sim[:, 0], 'r', label='$\hat y_{\mathrm{sim}}$')
     ax[0].legend(loc='upper right')
