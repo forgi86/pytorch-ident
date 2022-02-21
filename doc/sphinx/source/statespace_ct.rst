@@ -5,7 +5,7 @@ Continuous-time state-space
 Models
 -------
 
-.. automodule:: torchid.statespace.module.ssmodels_ct
+.. automodule:: torchid.ss.ct.models
    :members:
    :special-members:
    :member-order: bysource
@@ -14,7 +14,7 @@ Models
 Simulators
 -----------
 
-.. automodule:: torchid.statespace.module.ss_simulator_ct
+.. automodule:: torchid.ss.ct.simulators
    :members:
    :special-members:
    :member-order: bysource

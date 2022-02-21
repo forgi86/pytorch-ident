@@ -4,7 +4,7 @@ Discrete-time state-space
 
 Models
 ----------------
-.. automodule:: torchid.statespace.module.ssmodels_dt
+.. automodule:: torchid.ss.dt.models
    :members:
    :special-members:
    :member-order: bysource
@@ -14,7 +14,7 @@ Models
 Simulators
 --------------------------------
 
-.. automodule:: torchid.statespace.module.ss_simulator_dt
+.. automodule:: torchid.ss.dt.simulator
    :members:
    :special-members:
    :member-order: bysource
