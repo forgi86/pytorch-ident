@@ -12,11 +12,11 @@ if __name__ == '__main__':
     plot_input = False
 
     dataset_type = 'val'
-    #model_name = 'model_SS_256step'
-    #hidden_name = 'hidden_SS_256step'
+    #model_name = 'model_ss_256step'
+    #hidden_name = 'hidden_ss_256step'
 
-    model_name = 'model_SS_full'
-    hidden_name = 'hidden_SS_full'
+    model_name = 'model_ss_full'
+    hidden_name = 'hidden_ss_full'
 
     # Load dataset
     df_data = pd.read_csv(os.path.join("data", "CascadedTanksFiles", "dataBenchmark.csv"))

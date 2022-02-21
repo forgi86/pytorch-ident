@@ -3,14 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Pytorch-ident documentation!
-===================================
+pytorch-ident documentation
+===========================
 
+A system identification library based on the pytorch Deep Learning framework.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   datasets
    statespace_dt
    statespace_ct
    dynonet

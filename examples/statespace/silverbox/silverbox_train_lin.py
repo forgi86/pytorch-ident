@@ -28,7 +28,7 @@ if __name__ == '__main__':
     t_train, u_train, y_train = silverbox_loader("train", scale=True)
 
     #%% Prepare dataset
-    train_data = SubsequenceDataset(u_train, y_train, subseq_len)
+    train_data = SubsequenceDataset(u_train, y_train, subseq_len=subseq_len)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
     f_xu = LinearStateUpdate(n_x, n_u, d_max)
@@ -82,9 +82,8 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
-    #%%
+    #%% Save model
 
-    # Save model
     if not os.path.exists("models"):
         os.makedirs("models")
 

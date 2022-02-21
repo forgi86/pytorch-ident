@@ -1,9 +1,9 @@
-Discrete-time state-space
-===========================
+Discrete-time state-space identification
+========================================
 
 
-Models
-----------------
+Discrete-time models
+--------------------
 .. automodule:: torchid.ss.dt.models
    :members:
    :special-members:
@@ -11,8 +11,8 @@ Models
    :exclude-members: __init__, forward
 
 
-Simulators
---------------------------------
+Discrete-time simulators
+------------------------
 
 .. automodule:: torchid.ss.dt.simulator
    :members:

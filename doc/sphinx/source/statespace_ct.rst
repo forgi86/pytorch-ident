@@ -1,9 +1,9 @@
-Continuous-time state-space
-===========================
+Continuous-time state-space identification
+==========================================
 
 
-Models
--------
+Continuous-time models
+----------------------
 
 .. automodule:: torchid.ss.ct.models
    :members:
@@ -11,8 +11,8 @@ Models
    :member-order: bysource
    :exclude-members: __init__, forward
 
-Simulators
------------
+Continuous-time simulators
+--------------------------
 
 .. automodule:: torchid.ss.ct.simulators
    :members:

@@ -5,7 +5,15 @@ from torchid.ss.poly_utils import valid_coeffs
 
 class NeuralStateUpdate(nn.Module):
 
-    r"""A state-space discrete-time model. The state mapping is a neural network with one hidden layer.
+    r"""State-update mapping modeled as a feed-forward neural network with one hidden layer.
+
+    The model has structure:
+
+    .. math::
+        \begin{aligned}
+            x_{k+1} = x_k + \mathcal{N}(x_k, u_k),
+        \end{aligned}
+    where :math:`\mathcal{N}(\cdot, \cdot)` is a feed-forward neural network with one hidden layer.
 
     Args:
         n_x (int): Number of state variables
@@ -43,8 +51,15 @@ class NeuralStateUpdate(nn.Module):
 
 
 class PolynomialStateUpdate(nn.Module):
-    r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
-    part modeled as a neural network
+    r"""State-update mapping modeled as a polynomial in x and u.
+
+    The model has structure:
+
+    .. math::
+        \begin{aligned}
+            x_{k+1} = x_k + Ax_{k} + Bu_{k} + Ez_{k},
+        \end{aligned}
+    where z_{k} is a vector containing (non-linear) monomials in x_{k} and u_{k}
 
     Args:
         n_x: (np.array): Number of states.
@@ -91,8 +106,14 @@ class PolynomialStateUpdate(nn.Module):
 
 
 class LinearStateUpdate(nn.Module):
-    r"""A state-space continuous-time model corresponding to the sum of a linear state-space model plus a non-linear
-    part modeled as a neural network
+    r"""State-update mapping modeled as a linear function in x and u.
+
+    The model has structure:
+
+    .. math::
+        \begin{aligned}
+            x_{k+1} = x_k + Ax_{k} + Bu_{k}.
+        \end{aligned}
 
     Args:
         n_x: (np.array): Number of states.
@@ -121,9 +142,9 @@ class LinearStateUpdate(nn.Module):
 
 class CTSNeuralStateSpace(nn.Module):
     r"""A state-space model to represent the cascaded two-tank system.
+
     Args:
         n_feat: (int, optional): Number of input features in the hidden layer. Default: 0
-        scale_dx: (str): Scaling factor for the neural network output. Default: 1.0
         init_small: (boolean, optional): If True, initialize to a Gaussian with mean 0 and std 10^-4. Default: True
     """
 
@@ -151,6 +172,16 @@ class CTSNeuralStateSpace(nn.Module):
 
 
 class LinearOutput(nn.Module):
+    r"""Output  mapping modeled as a linear function in x.
+
+    The model has structure:
+
+    .. math::
+        \begin{aligned}
+            y_{k} = Cx_k.
+        \end{aligned}
+    """
+
     def __init__(self, n_x, n_y, bias=False):
         super(LinearOutput, self).__init__()
         self.n_x = n_x
@@ -162,6 +193,9 @@ class LinearOutput(nn.Module):
 
 
 class ChannelsOutput(nn.Module):
+    r"""Output  mapping corresponding to a specific state channel.
+
+    """
     def __init__(self, channels):
         super(ChannelsOutput, self).__init__()
         self.channels = channels
