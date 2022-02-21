@@ -1,6 +1,10 @@
 """
 Use an LSTM encoder network to estimate the initial state (backward in time), then simulate it forward in time.
 Overall, the combination of state_estimator + nn_solution may be seen as an autoencoder.
+
+- Slightly more complex than 1-step-ahead prediction
++ Can handle partial state observation
++ Works well with measurement noise
 """
 
 
@@ -31,12 +35,14 @@ if __name__ == '__main__':
     batch_size = 32  # batch size q
     lr = 1e-4  # learning rate
     n_fit = 5000
+    n_feat = 50
+    n_x = 2
 
     # Load dataset
-    t, u, y, x = rlc_loader("train", "nl", noise_std=0.1, n_data=n_fit)
+    t, u, y, _ = rlc_loader("train", "nl", noise_std=0.1, n_data=n_fit)  # state not used
 
     # Setup neural model structure
-    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=50)
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=n_feat)
     g_x = ChannelsOutput(channels=[0])  # output is channel 0
     model = StateSpaceSimulator(f_xu, g_x)
     state_estimator = FlippedLSTMStateEstimator(n_u=1, n_y=1, n_x=2)
@@ -95,7 +101,10 @@ if __name__ == '__main__':
         os.makedirs("models")
 
     model_filename = "ss_model_ae.pt"
-    torch.save({"model": model.state_dict(),
+    torch.save({
+                "n_x": n_x,
+                "n_feat": n_feat,
+                "model": model.state_dict(),
                 "estimator": state_estimator.state_dict()
                 },
                os.path.join("models", model_filename))

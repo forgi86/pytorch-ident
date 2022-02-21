@@ -17,7 +17,7 @@ if __name__ == '__main__':
     n_fit = 40000
     subseq_len = 256
     batch_size = 64
-    lr = 1e-5
+    lr = 1e-3
     epochs = 10
     n_x = 2
     n_u = 1
@@ -38,8 +38,8 @@ if __name__ == '__main__':
 
     # Setup optimizer
     optimizer = optim.Adam([
-        {'params': model.parameters(), 'lr': 1e-3},
-        {'params': state_estimator.parameters(), 'lr': 1e-3},
+        {'params': model.parameters(), 'lr': lr},
+        {'params': state_estimator.parameters(), 'lr': lr},
     ], lr=lr)
 
     LOSS = []
@@ -85,9 +85,7 @@ if __name__ == '__main__':
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
 
-    #%%
-
-    # Save model
+    #%% Save model
     if not os.path.exists("models"):
         os.makedirs("models")
 

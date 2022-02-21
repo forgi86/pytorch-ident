@@ -10,17 +10,19 @@ from loader import rlc_loader
 
 if __name__ == '__main__':
 
-    model_filename = "ss_model_ae.pt"
+    #model_filename = "ss_model_ae.pt"
+    model_filename = "ss_model_1step.pt"
     model_data = torch.load(os.path.join("models", model_filename))
-    n_x = 2
+    n_feat = model_data["n_feat"]
 
     # Column names in the dataset
     t, u, y, x = rlc_loader("test", "nl", noise_std=0.0)
+    n_x = x.shape[-1]
     ts = t[1, 0] - t[0, 0]
 
     # Setup neural model structure and load fitted model parameters
-    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=50)
-    g_x = ChannelsOutput(channels=[0])  # output is channel 0
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=n_feat)
+    g_x = ChannelsOutput(channels=[0])  # output mapping corresponding to channel 0
     model = StateSpaceSimulator(f_xu, g_x)
     model.load_state_dict(model_data["model"])
 
@@ -51,4 +53,4 @@ if __name__ == '__main__':
 
     # R-squared metrics
     R_sq = metrics.r_squared(y, y_sim)
-    print(f"R-squared metrics: {R_sq}")
+    print(f"R-squared: {R_sq}")
