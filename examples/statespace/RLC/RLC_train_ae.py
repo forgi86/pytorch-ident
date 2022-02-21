@@ -96,11 +96,9 @@ if __name__ == '__main__':
 
     model_filename = "ss_model_ae.pt"
     torch.save({"model": model.state_dict(),
-                "estimator": state_estimator
+                "estimator": state_estimator.state_dict()
                 },
                os.path.join("models", model_filename))
-
-    n_val = n_fit
 
     #%% Simulate
     with torch.no_grad():

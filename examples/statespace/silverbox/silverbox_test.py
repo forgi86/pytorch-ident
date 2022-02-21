@@ -34,7 +34,8 @@ if __name__ == '__main__':
         # y_v = torch.tensor(y[:, None, :])
         # x0 = state_estimator(u_v, y_v)
         x0 = torch.zeros(1, n_x, dtype=torch.float32)  # initial state set to 0 for simplicity
-        y_sim = model(x0, u_v).squeeze(1).detach().numpy()  # remove batch dimension
+        y_sim = model(x0, u_v).squeeze(1)  # remove batch dimension
+    y_sim = y_sim.detach().numpy()
 
     #%% Test
     fig, ax = plt.subplots(1, 1, sharex=True)
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     fit_idx = metrics.fit_index(y, y_sim)[0]
     r_sq = metrics.r_squared(y, y_sim)[0]
 
-    print(f"RMSE: {e_rms:.1f}V\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
+    print(f"RMSE: {e_rms:.1f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
 
 
