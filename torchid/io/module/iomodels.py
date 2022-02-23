@@ -4,7 +4,7 @@ import numpy as np
 
 
 class NeuralIOModel(nn.Module):
-    """ This class implements an IO neural model
+    """ This class implements an io neural model
 
      Attributes
      ----------

@@ -4,12 +4,12 @@ import numpy as np
 
 
 class NeuralIOSimulator:
-    """ This class implements prediction/simulation methods for the IO model structure
+    """ This class implements prediction/simulation methods for the io model structure
 
      Attributes
      ----------
      io_model: nn.Module
-               The neural IO model to be fitted
+               The neural io model to be fitted
      """
 
     def __init__(self, io_model):
@@ -21,7 +21,7 @@ class NeuralIOSimulator:
         Parameters
         ----------
         PHI : Tensor. Size: (N, n_a + n_b)
-              Measured IO regressor tensor
+              Measured io regressor tensor
 
         Returns
         -------
