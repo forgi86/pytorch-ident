@@ -54,7 +54,7 @@ def rmse(y_true, y_pred, time_axis=0):
     return RMSE
 
 
-def error_nrmse(y_true, y_pred, time_axis=0):
+def nrmse(y_true, y_pred, time_axis=0):
     """ Computes the Normalized Root Mean Square Error (NRMSE).
 
     The NRMSE index is computed separately on each channel.
@@ -84,7 +84,7 @@ def error_nrmse(y_true, y_pred, time_axis=0):
 def error_mean(y_true, y_pred, time_axis=0):
     """ Computes the error mean value.
 
-    The RMSE index is computed separately on each channel.
+    The error mean is computed separately on each channel.
 
     Parameters
     ----------
@@ -105,10 +105,10 @@ def error_mean(y_true, y_pred, time_axis=0):
     return e_mean
 
 
-def error_mae(y_true, y_pred, time_axis=0):
+def mae(y_true, y_pred, time_axis=0):
     """ Computes the error Mean Absolute Value (MAE)
 
-    The RMSE index is computed separately on each channel.
+    The MAE index is computed separately on each channel.
 
     Parameters
     ----------
