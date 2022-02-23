@@ -13,6 +13,7 @@ class NeuralStateUpdate(nn.Module):
         \begin{aligned}
             x_{k+1} = x_k + \mathcal{N}(x_k, u_k),
         \end{aligned}
+
     where :math:`\mathcal{N}(\cdot, \cdot)` is a feed-forward neural network with one hidden layer.
 
     Args:
@@ -59,6 +60,7 @@ class PolynomialStateUpdate(nn.Module):
         \begin{aligned}
             x_{k+1} = x_k + Ax_{k} + Bu_{k} + Ez_{k},
         \end{aligned}
+
     where z_{k} is a vector containing (non-linear) monomials in x_{k} and u_{k}
 
     Args:
