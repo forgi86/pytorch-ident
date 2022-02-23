@@ -6,7 +6,8 @@ A collection of system identification tools implemented in PyTorch.
 
 ## Examples and Documentation
 
-See the [**examples**](examples) folder.
+* Examples are provided in the [**examples**](examples) folder of this repo.
+* The API documentation is available at https://pytorch-ident.readthedocs.io/en/latest.
 
 
 ## Installation:
