@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..')))
 
 # -- Project information -----------------------------------------------------
 
-project = 'torchid'
+project = 'pytorch-ident'
 copyright = '2020, Marco Forgione'
 author = 'Marco Forgione'
 

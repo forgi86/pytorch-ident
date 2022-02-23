@@ -1,5 +1,6 @@
-dynoNet API
+dynoNet
 ===========
+
 -----------------------
 Linear dynamical blocks
 -----------------------

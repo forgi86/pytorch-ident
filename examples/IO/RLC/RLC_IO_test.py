@@ -3,8 +3,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import os
-from torchid.IO.module.io_simulator import NeuralIOSimulator
-from torchid.IO.module.iomodels import NeuralIOModel
+from torchid.io.module.io_simulator import NeuralIOSimulator
+from torchid.io.module.iomodels import NeuralIOModel
 import torchid.metrics as metrics
 
 if __name__ == '__main__':

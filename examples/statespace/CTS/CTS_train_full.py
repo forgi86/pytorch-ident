@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use("TkAgg")
 import os
 import pandas as pd
 import numpy as np
@@ -7,10 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-import sys
-sys.path.append(os.path.join("../..", ".."))
-from torchid.statespace.module.ss_simulator_dt import NeuralStateSpaceSimulator
-from torchid.statespace.module.ssmodels_dt import CTSNeuralStateSpaceModel
+from torchid.ss.dt.simulator import StateSpaceSimulator
+from torchid.ss.dt.models import CTSNeuralStateSpace
 
 
 if __name__ == '__main__':
@@ -43,17 +39,17 @@ if __name__ == '__main__':
     time_fit = time_exp
 
     # Setup neural model structure
-    ss_model = CTSNeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64, ts=ts)
-    nn_solution = NeuralStateSpaceSimulator(ss_model)
+    ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
+    nn_solution = StateSpaceSimulator(ss_model)
 
     model_name = 'model_SS_256step'
     hidden_name = 'hidden_SS_256step'
-    nn_solution.ss_model.load_state_dict(torch.load(os.path.join("models", model_name + ".pkl")))
-    x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pkl"))
+    #nn_solution.load_state_dict(torch.load(os.path.join("models", model_name + ".pkl")))
+    #x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pkl"))
 
 
     # Setup optimizer
-    params_net = list(nn_solution.ss_model.parameters())
+    params_net = list(nn_solution.parameters())
     params_hidden = [x_hidden_fit]
     optimizer = optim.Adam([
         {'params': params_net,    'lr': lr},
@@ -63,17 +59,16 @@ if __name__ == '__main__':
     # Scale loss with respect to the initial one
     with torch.no_grad():
         x0_torch = x_hidden_fit[0, :]
-        x_est_torch = nn_solution.f_sim(x0_torch, u_fit_torch)
-        err_init = x_est_torch[:, [0]]  - y_fit_torch
-        scale_error = torch.sqrt(torch.mean((err_init)**2, dim=(0)))
+        x_est_torch = nn_solution(x0_torch, u_fit_torch)
+        err_init = x_est_torch[:, [0]] - y_fit_torch
+        scale_error = torch.sqrt(torch.mean(err_init**2, dim=0))
 
     LOSS_TOT = []
     LOSS_FIT = []
     LOSS_CONSISTENCY = []
     start_time = time.time()
-    # Training loop
 
-    #scripted_nn_solution = torch.jit.script(nn_solution)
+    # Training loop
     for itr in range(0, num_iter):
 
         optimizer.zero_grad()
@@ -81,7 +76,7 @@ if __name__ == '__main__':
         x0_torch = x_hidden_fit[0, :]
 
         # Perform open-loop simulation
-        x_sim = nn_solution.f_sim(x0_torch, u_fit_torch)
+        x_sim = nn_solution(x0_torch, u_fit_torch)
 
         # Compute fit loss
         err_fit = x_sim[:, [0]] - y_fit_torch
@@ -102,7 +97,7 @@ if __name__ == '__main__':
         optimizer.step()
 
     train_time = time.time() - start_time
-    print(f"\nTrain time: {train_time:.2f}") # 182 seconds
+    print(f"\nTrain time: {train_time:.2f}")
 
     if not os.path.exists("models"):
         os.makedirs("models")
@@ -111,10 +106,10 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
-    model_filename = f"model_SS_{'simerr'}.pkl"
-    hidden_filename = f"hidden_SS_{'simerr'}.pkl"
+    model_filename = f"model_ss_full.pt"
+    hidden_filename = f"hidden_ss_full.pt"
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.state_update.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     # Plot figures
@@ -142,7 +137,6 @@ if __name__ == '__main__':
     ax[0].legend()
     ax[0].grid(True)
 
-    #ax[1].plot(x_est[:, 1], 'k', label='Estimated')
     ax[1].plot(x_hidden_fit_np[:, 1], 'r', label='Hidden')
     ax[1].legend()
     ax[1].grid(True)
@@ -151,21 +145,17 @@ if __name__ == '__main__':
     y_val = np.copy(y_fit)
     u_val = np.copy(u_fit)
 
-    #x0_val = np.array(x_est[0, :])
-    #x0_val[1] = 0.0
     x0_val = x_hidden_fit[0, :].detach().numpy() # initial state had to be estimated, according to the dataset description
     x0_torch_val = torch.from_numpy(x0_val)
     u_torch_val = torch.tensor(u_val)
 
     with torch.no_grad():
-        x_sim_torch = nn_solution.f_sim(x0_torch_val[None, :], u_torch_val[:, None, :])
+        x_sim_torch = nn_solution(x0_torch_val[None, :], u_torch_val[:, None, :])
         y_sim_torch = x_sim_torch[:, 0]
         x_sim = y_sim_torch.detach().numpy()
 
-
     # Simulation plot
     fig, ax = plt.subplots(2, 1, sharex=True, figsize=(6, 7.5))
-    #ax[0].plot(time_exp, q_ref,  'k',  label='$q_{\mathrm{ref}}$')
     ax[0].plot(time_exp, y_val, 'k', label='$y_{\mathrm{meas}}$')
     ax[0].plot(time_exp, x_sim[:, 0], 'r', label='$\hat y_{\mathrm{sim}}$')
     ax[0].legend(loc='upper right')

@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
-from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
-from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
+from torchid.ss.ct.ssmodels_ct import NeuralStateSpaceModel
+from torchid.ss.ct.ss_simulator_ct import ForwardEulerSimulator
 
 # Truncated simulation error minimization method
 if __name__ == '__main__':
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     nn_solution = ForwardEulerSimulator(ss_model)  # ExplicitRKSimulator(ss_model)
 
     # Setup optimizer
-    params_net = list(nn_solution.ss_model.parameters())
+    params_net = list(nn_solution.f_xu.parameters())
     params_hidden = [x_hidden_fit]
     optimizer = optim.Adam([
         {'params': params_net,    'lr': lr},
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         model_filename = f"model_SS_{seq_len}step_nonoise.pt"
         hidden_filename = f"hidden_SS_{seq_len}step_nonoise.pt"
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.f_xu.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     t_val = 5e-3

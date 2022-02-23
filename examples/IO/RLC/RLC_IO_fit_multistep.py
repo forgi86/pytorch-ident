@@ -6,8 +6,8 @@ import time
 import matplotlib.pyplot as plt
 import os
 import scipy.linalg
-from torchid.IO.module.io_simulator import NeuralIOSimulator
-from torchid.IO.module.iomodels import NeuralIOModel
+from torchid.io.module.io_simulator import NeuralIOSimulator
+from torchid.io.module.iomodels import NeuralIOModel
 
 if __name__ == '__main__':
 

@@ -1,4 +1,3 @@
-import matplotlib
 import os
 import pandas as pd
 import numpy as np
@@ -6,10 +5,8 @@ import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-import sys
-sys.path.append(os.path.join("../..", ".."))
-from torchid.statespace.module.ss_simulator_dt import NeuralStateSpaceSimulator
-from torchid.statespace.module.ssmodels_dt import CTSNeuralStateSpaceModel
+from torchid.ss.dt.simulator import StateSpaceSimulator
+from torchid.ss.dt.models import CTSNeuralStateSpace
 
 
 if __name__ == '__main__':
@@ -21,7 +18,7 @@ if __name__ == '__main__':
     # Overall parameters
     num_iter = 40000  # gradient-based optimization steps
     seq_len = 256  # subsequence length m
-    batch_size = 32 # batch size
+    batch_size = 32  # batch size
     alpha = 0.5  # fit/consistency trade-off constant
     lr = 1e-4  # learning rate
     test_freq = 100  # print message every test_freq iterations
@@ -43,11 +40,11 @@ if __name__ == '__main__':
     time_fit = time_exp
 
     # Setup neural model structure
-    ss_model = CTSNeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64, ts=ts)
-    nn_solution = NeuralStateSpaceSimulator(ss_model)
+    f_xu = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
+    nn_solution = StateSpaceSimulator(f_xu)
 
     # Setup optimizer
-    params_net = list(nn_solution.ss_model.parameters())
+    params_net = list(nn_solution.parameters())
     params_hidden = [x_hidden_fit]
     optimizer = optim.Adam([
         {'params': params_net,    'lr': lr},
@@ -62,7 +59,7 @@ if __name__ == '__main__':
         batch_start = np.random.choice(np.arange(num_train_samples - seq_len, dtype=np.int64),
                                        batch_size, replace=False)  # batch start indices
         batch_idx = batch_start[:, np.newaxis] + np.arange(seq_len)  # batch samples indices
-        #batch_idx = batch_idx.T  # transpose indexes to obtain batches with structure (m, q, n_x)
+        batch_idx = batch_idx.T  # transpose indexes to obtain batches with structure (m, q, n_x) batch_first=False
 
         # Extract batch data
         batch_t = torch.tensor(time_fit[batch_idx])
@@ -76,8 +73,7 @@ if __name__ == '__main__':
     # Scale loss with respect to the initial one
     with torch.no_grad():
         batch_t, batch_x0_hidden, batch_u, batch_y, batch_x_hidden = get_batch(batch_size, seq_len)
-        batch_x_sim = nn_solution.f_sim_multistep(batch_x0_hidden, batch_u)
-        #traced_nn_solution = torch.jit.trace(nn_solution, (batch_x0_hidden, batch_u))
+        batch_x_sim = nn_solution(batch_x0_hidden, batch_u)
         err_init = batch_x_sim - batch_y
         scale_error = torch.sqrt(torch.mean(err_init**2, dim=(0, 1)))
 
@@ -87,16 +83,13 @@ if __name__ == '__main__':
     start_time = time.time()
     # Training loop
 
-    #scripted_nn_solution = torch.jit.script(nn_solution)
     for itr in range(0, num_iter):
 
         optimizer.zero_grad()
 
         # Simulate
         batch_t, batch_x0_hidden, batch_u, batch_y, batch_x_hidden = get_batch(batch_size, seq_len)
-        batch_x_sim = nn_solution.f_sim_multistep(batch_x0_hidden, batch_u) # 52 seconds RK | 13 FE
-        #batch_x_sim = nn_solution(batch_x0_hidden, batch_u) # 70 seconds RK | 13 FE
-        #batch_x_sim = scripted_nn_solution(batch_x0_hidden, batch_u) # 71 seconds RK | 13 FE
+        batch_x_sim = nn_solution(batch_x0_hidden, batch_u)
 
         # Compute fit loss
         err_fit = batch_x_sim[:, :, [0]] - batch_y
@@ -133,10 +126,10 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
-    model_filename =  f"model_SS_{seq_len}step.pt"
-    hidden_filename = f"hidden_SS_{seq_len}step.pt"
+    model_filename =  f"model_ss_{seq_len}step.pt"
+    hidden_filename = f"hidden_ss_{seq_len}step.pt"
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.state_update.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     # Plot figures
@@ -173,14 +166,13 @@ if __name__ == '__main__':
     y_val = np.copy(y_fit)
     u_val = np.copy(u_fit)
 
-    #x0_val = np.array(x_est[0, :])
-    #x0_val[1] = 0.0
-    x0_val = x_hidden_fit[0, :].detach().numpy() # initial state had to be estimated, according to the dataset description
+    # initial state had to be estimated, according to the dataset description
+    x0_val = x_hidden_fit[0, :].detach().numpy()
     x0_torch_val = torch.from_numpy(x0_val)
     u_torch_val = torch.tensor(u_val)
 
     with torch.no_grad():
-        x_sim_torch = nn_solution.f_sim(x0_torch_val[None, :], u_torch_val[:, None, :])
+        x_sim_torch = nn_solution(x0_torch_val[None, :], u_torch_val[:, None, :])
         y_sim_torch = x_sim_torch[:, 0]
         x_sim = y_sim_torch.detach().numpy()
 

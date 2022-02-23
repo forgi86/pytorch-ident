@@ -1,2 +1,3 @@
 RLC: Simulated non-linear linear RLC series circuit
-WH2009: Cascaded Tanks system from www.nonlinearbenchmark.org
+CTS: Cascaded Tanks system from www.nonlinearbenchmark.org
+silverbox: Electronic implementation of the Duffing oscillator from www.nonlinearbenchmark.org

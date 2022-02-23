@@ -1,12 +1,20 @@
-import pandas as pd
+"""
+Train with a 1-step-ahead prediction model.
+
++ Very simple and efficient
+- Requires full state measurement
+- It is not very robust to noise.
+"""
+
+import os
 import numpy as np
 import torch
 import torch.optim as optim
 import time
 import matplotlib.pyplot as plt
-import os
-from torchid.statespace.module.ssmodels_ct import NeuralStateSpaceModel
-from torchid.statespace.module.ss_simulator_ct import ForwardEulerSimulator
+from torchid.ss.dt.models import NeuralStateUpdate
+from torchid.ss.dt.simulator import StateSpaceSimulator
+from loader import rlc_loader
 
 if __name__ == '__main__':
 
@@ -19,54 +27,32 @@ if __name__ == '__main__':
     lr = 1e-4  # learning rate
     num_iter = 40000  # gradient-based optimization steps
     test_freq = 500  # print message every test_freq iterations
-    add_noise = False
-
-    # Column names in the dataset
-    COL_T = ['time']
-    COL_X = ['V_C', 'I_L']
-    COL_U = ['V_IN']
-    COL_Y = ['V_C']
+    n_feat = 50
 
     # Load dataset
-    df_X = pd.read_csv(os.path.join("data", "RLC_data_id.csv"))
-    time_data = np.array(df_X[COL_T], dtype=np.float32)
-    x = np.array(df_X[COL_X], dtype=np.float32)
-    u = np.array(df_X[COL_U], dtype=np.float32)
+    t, u, y, x = rlc_loader("train", "nl", noise_std=0.1, dtype=np.float32)
+    n_x = x.shape[-1]
+    n_u = u.shape[-1]
+    n_y = y.shape[-1]
 
-    # Add measurement noise
-    std_noise_V = add_noise * 10.0
-    std_noise_I = add_noise * 1.0
-    std_noise = np.array([std_noise_V, std_noise_I])
-    x_noise = np.copy(x) + np.random.randn(*x.shape)*std_noise
-    x_noise = x_noise.astype(np.float32)
-
-    # Compute SNR
-    P_x = np.mean(x ** 2, axis=0)
-    P_n = std_noise**2
-    SNR = P_x/(P_n+1e-10)
-    SNR_db = 10*np.log10(SNR)
-
-    ts = time_data[1] - time_data[0]
+    ts = t[1] - t[0]
     n_fit = int(t_fit // ts)
-    ts_integ = 1.0
 
     # Fit data to pytorch tensors #
-    u_fit = u[0:n_fit]
-    x_fit = x_noise[0:n_fit]
-    u_fit_torch = torch.from_numpy(u_fit)
-    x_fit_torch = torch.from_numpy(x_fit)
+    u_train = torch.tensor(u, dtype=torch.float32)
+    x_train = torch.tensor(x, dtype=torch.float32)
 
     # Setup neural model structure
-    ss_model = NeuralStateSpaceModel(n_x=2, n_u=1, n_feat=64)
-    nn_solution = ForwardEulerSimulator(ss_model)
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=n_feat)
+    model = StateSpaceSimulator(f_xu)
 
     # Setup optimizer
-    optimizer = optim.Adam(nn_solution.ss_model.parameters(), lr=lr)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     # Scale loss with respect to the initial one
     with torch.no_grad():
-        DX = x_fit_torch[1:, :] - x_fit_torch[0:-1, :]
-        scale_error = torch.sqrt(torch.mean(DX**2, dim=0))
+        delta_x = x_train[1:, :] - x_train[0:-1, :]
+        scale_error = torch.sqrt(torch.mean(delta_x ** 2, dim=0))
 
     LOSS = []
     start_time = time.time()
@@ -75,10 +61,10 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Perform one-step ahead prediction
-        DX_pred = ts_integ * ss_model(x_fit_torch[0:-1, :], u_fit_torch[0:-1, :])
-        DX = x_fit_torch[1:, :] - x_fit_torch[0:-1, :]
+        delta_x_hat = model.state_update(x_train[0:-1, :], u_train[0:-1, :])
+        delta_x = x_train[1:, :] - x_train[0:-1, :]
 
-        err = DX - DX_pred
+        err = delta_x - delta_x_hat
         err_scaled = err/scale_error
 
         # Compute fit loss
@@ -96,18 +82,40 @@ if __name__ == '__main__':
     train_time = time.time() - start_time  # 114 seconds
     print(f"\nTrain time: {train_time:.2f}")
 
-    # Save model
+    #%% Save model
     if not os.path.exists("models"):
         os.makedirs("models")
-    if add_noise:
-        model_filename = "model_SS_1step_noise.pt"
-    else:
-        model_filename = "model_SS_1step_nonoise.pt"
+    model_filename = "ss_model_1step.pt"
+    torch.save({"n_x": 2,
+                "n_y": 1,
+                "n_u": 1,
+                "model": model.state_dict(),
+                "n_feat": n_feat
+                },
+               os.path.join("models", model_filename))
 
-    torch.save(nn_solution.ss_model.state_dict(), os.path.join("models", model_filename))
+    #%% Simulate model
 
+    t_test, u_test, y_test, x_test = rlc_loader("test", "nl", noise_std=0.0, dtype=np.float32)
 
-    # In[Plot loss]
+    with torch.no_grad():
+        x0 = torch.zeros((1, n_x), dtype=torch.float32)
+        y_sim, x_sim = model(x0, torch.tensor(u_test)[:, None, :], return_x=True)
+
+    y_sim = y_sim.squeeze(1).detach().numpy()
+    x_sim = x_sim.squeeze(1).detach().numpy()
+
+    fig, ax = plt.subplots(2, 1, sharex=True)
+    ax[0].plot(x_test[:, 0], 'k+', label='True')
+    ax[0].plot(x_sim[:, 0], 'r', label='Sim')
+    ax[0].legend()
+    ax[1].plot(x_test[:, 1], 'k+', label='True')
+    ax[1].plot(x_sim[:, 1], 'r', label='Sim')
+    ax[1].legend()
+    ax[0].grid(True)
+    ax[1].grid(True)
+
+    #%% Plot loss
 
     if not os.path.exists("fig"):
         os.makedirs("fig")
@@ -117,39 +125,3 @@ if __name__ == '__main__':
     ax.grid(True)
     ax.set_ylabel("Loss (-)")
     ax.set_xlabel("Iteration (-)")
-
-    if add_noise:
-        fig_name = "RLC_SS_loss_1step_noise.pdf"
-    else:
-        fig_name = "RLC_SS_loss_1step_nonoise.pdf"
-
-    fig.savefig(os.path.join("fig", fig_name), bbox_inches='tight')
-
-    # In[Simulate model]
-    t_val = 5e-3
-    n_val = int(t_val // ts)  # x.shape[0]
-
-    u_val = u[0:n_val]
-    x_val = x[0:n_val]
-
-    x0_val = np.zeros(2, dtype=np.float32)
-    x0_torch_val = torch.from_numpy(x0_val)
-    u_torch_val = torch.tensor(u_val)
-    x_true_torch_val = torch.from_numpy(x_val)
-
-    time_start = time.time()
-    with torch.no_grad():
-        x_sim_torch_val = nn_solution(x0_torch_val[None, :], u_torch_val[:, None, :])
-        x_sim_torch_val = x_sim_torch_val.squeeze(1)
-
-    x_sim = np.array(x_sim_torch_val)
-    fig, ax = plt.subplots(2,1,sharex=True)
-    ax[0].plot(x_val[:, 0], 'k+', label='True')
-    ax[0].plot(x_sim[:, 0], 'r', label='Sim')
-    ax[0].legend()
-    ax[1].plot(x_val[:, 1], 'k+', label='True')
-    ax[1].plot(x_sim[:, 1], 'r', label='Sim')
-    ax[1].legend()
-    ax[0].grid(True)
-    ax[1].grid(True)
-

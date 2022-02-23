@@ -6,7 +6,7 @@ import control.matlab
 import pandas as pd
 import os
 
-from examples.statespace.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_mod
+from examples.statespace.RLC.symbolic_RLC import fxu_ODE, fxu_ODE_nl
 
 if __name__ == '__main__':
 
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     N_sim_u = N_sim + N_skip
     e = np.random.randn(N_sim_u)
     te = np.arange(N_sim_u) * Ts
-    _, u, _ = control.forced_response(Hu, te, e)
+    _, u = control.forced_response(Hu, te, e, return_x=False)
     u = u[N_skip:]
     u = u /np.std(u) * std_input
     
@@ -38,20 +38,21 @@ if __name__ == '__main__':
     u_func = interp1d(t_sim, u, kind='zero', fill_value="extrapolate")
 
 
-    def f_ODE(t,x):
+    def f_ODE(t, x):
         u = u_func(t).ravel()
         return fxu_ODE(t, x, u)
 
-    def f_ODE_mod(t,x):
+
+    def f_ODE_nl(t, x):
         u = u_func(t).ravel()
-        return fxu_ODE_mod(t, x, u)
+        return fxu_ODE_nl(t, x, u)
 
 
     x0 = np.zeros(2)
-    f_ODE(0.0,x0)
-    t_span = (t_sim[0],t_sim[-1])
-    y1 = solve_ivp(f_ODE, t_span, x0, t_eval = t_sim)
-    y2 = solve_ivp(f_ODE_mod, t_span, x0, t_eval = t_sim)
+    f_ODE(0.0, x0)
+    t_span = (t_sim[0], t_sim[-1])
+    y1 = solve_ivp(f_ODE, t_span, x0, t_eval=t_sim)
+    y2 = solve_ivp(f_ODE_nl, t_span, x0, t_eval=t_sim)
     
     x1 = y1.y.T
     x2 = y2.y.T
@@ -87,8 +88,7 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
     COL = COL_T + COL_X + COL_U + COL_Y
     df_X = pd.DataFrame(X, columns=COL)
-#    df_X.to_csv(os.path.join("data", "RLC_data_id.csv"), index=False)
-
+    df_X.to_csv(os.path.join("data", "RLC_data_id_lin.csv"), index=False)
 
     X = np.hstack((t_sim.reshape(-1, 1), x2, u.reshape(-1, 1), x2[:, 0].reshape(-1, 1)))
     COL_T = ['time']
@@ -97,4 +97,4 @@ if __name__ == '__main__':
     COL_Y = ['V_C']
     COL = COL_T + COL_X + COL_U + COL_Y
     df_X = pd.DataFrame(X, columns=COL)
-    df_X.to_csv(os.path.join("data", "RLC_data_test.csv"), index=False)
+    df_X.to_csv(os.path.join("data", "RLC_data_test_nl.csv"), index=False)
