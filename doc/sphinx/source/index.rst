@@ -33,13 +33,13 @@ Installation
 
 from the command line
 
-2. Navigate to your local pyMPC folder
+2. Navigate to your local pytorch-ident folder
 
 .. code-block:: bash
 
-   cd <LOCAL_FOLDER>
+   cd LOCAL_FOLDER
 
-where <LOCAL_FOLDER> is the folder where you have just downloaded the code in step 2
+where LOCAL_FOLDER is the folder where you have just downloaded the code in step 2
 
 3. Install pytorch-ident in your python environment: run
 
