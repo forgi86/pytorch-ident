@@ -6,7 +6,7 @@ setup(
     url='https://github.com/forgi86/pytorch-ident.git',
     author='Marco Forgione',
     author_email='marco.forgione1986@gmail.com',
-    description='System identification with pytorch package',
+    description='A library for system identification with PyTorch',
     packages=["torchid"],
     install_requires=['numpy', 'scipy', 'matplotlib', 'torch'],  # to be checked
     extras_require={
