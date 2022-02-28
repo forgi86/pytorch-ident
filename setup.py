@@ -7,12 +7,12 @@ setup(
     author='Marco Forgione',
     author_email='marco.forgione1986@gmail.com',
     description='System identification with pytorch package',
-    packages=find_packages(),
+    packages=["torchid"],
     install_requires=['numpy', 'scipy', 'matplotlib', 'torch'],  # to be checked
     extras_require={
-        'continuous-time integration': ["nodepy"],
-        'download datasets': ["requests"],
+        'download datasets': ["requests", "googledrivedownloader"],
         'open datasets': ["pandas"],
+        'generate plots': ['matplotlib'],
         'generate documentation': ["sphinx"]
     }
 )

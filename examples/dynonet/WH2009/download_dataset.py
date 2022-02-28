@@ -1,24 +1,17 @@
 import os
-import requests
-import zipfile
-import examples.util.benchmark_url
+from google_drive_downloader import GoogleDriveDownloader as gdd
+
 
 if __name__ == '__main__':
 
     DATA_FOLDER = 'data'
 
-    # In[Make data folder if it does not exist]
+    # %% Make data folder if it does not exist
     if not os.path.exists(DATA_FOLDER):
         os.makedirs(DATA_FOLDER)
 
-    # In[Download dataset from www.nonlinearbenchmark.com]
-    r = requests.get(examples.util.benchmark_url.WH2009, allow_redirects=True)
-
-    # In[Save zipped file]
-    zipped_dataset_path = os.path.join('data', 'data.zip')
-    with open(zipped_dataset_path, 'wb') as f:
-        f.write(r.content)
-
-    # In[Extract zipped file]
-    with zipfile.ZipFile(zipped_dataset_path, 'r') as zip_ref:
-        zip_ref.extractall('data')
+    # %% Download dataset from www.nonlinearbenchmark.com
+    # https://drive.google.com/file/d/16ipySVfKfxkwqWmbO9Z19-VjDoC2S6hx/view?usp=sharing
+    gdd.download_file_from_google_drive(file_id='16ipySVfKfxkwqWmbO9Z19-VjDoC2S6hx',
+                                        dest_path='./data/data.zip',
+                                        unzip=True)

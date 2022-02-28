@@ -23,3 +23,6 @@ if __name__ == '__main__':
     # In[Extract zipped file]
     with zipfile.ZipFile(zipped_dataset_path, 'r') as zip_ref:
         zip_ref.extractall('data')
+
+    with zipfile.ZipFile(os.path.join("data", "CascadedTanksFiles.zip"), 'r') as zip_ref:
+        zip_ref.extractall("data")
