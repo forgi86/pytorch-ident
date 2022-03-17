@@ -89,10 +89,10 @@ if __name__ == '__main__':
             optimizer.step()
 
             if itr % 10 == 0:
-                print(f'Iteration {itr} | AE Loss {loss:.4f} ')
+                print(f'Iteration {itr} | Train Loss {loss:.4f} ')
             itr += 1
 
-        print(f'Epoch {epoch} | AE Loss {loss:.4f} ')
+        print(f'Epoch {epoch} | Train Loss {loss:.4f} ')
 
     train_time = time.time() - start_time
     print(f"\nTrain time: {train_time:.2f}")
