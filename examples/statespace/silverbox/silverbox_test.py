@@ -2,7 +2,7 @@ import os
 import torch
 from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput
 from torchid.ss.dt.simulator import StateSpaceSimulator
-from torchid.ss.dt.estimators import FlippedLSTMStateEstimator
+from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import silverbox_loader
 import matplotlib.pyplot as plt
 from torchid import metrics
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     f_xu = PolynomialStateUpdate(n_x, n_u, d_max)
     g_x = LinearOutput(n_x, n_y)
     model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = FlippedLSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x)
+    state_estimator = LSTMStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x)
     model.load_state_dict(model_data["model"])
     #state_estimator.load_state_dict(model_data["estimator"])
 
@@ -37,12 +37,6 @@ if __name__ == '__main__':
         y_sim = model(x0, u_v).squeeze(1)  # remove batch dimension
     y_sim = y_sim.detach().numpy()
 
-    #%% Test
-    fig, ax = plt.subplots(1, 1, sharex=True)
-    ax.plot(y[:, 0], 'k', label='meas')
-    ax.grid(True)
-    ax.plot(y_sim[:, 0], 'b', label='sim')
-
     #%% Metrics
     e_rms = 1000 * metrics.rmse(y, y_sim)[0]
     fit_idx = metrics.fit_index(y, y_sim)[0]
@@ -50,5 +44,11 @@ if __name__ == '__main__':
 
     print(f"RMSE: {e_rms:.1f}mV\nFIT:  {fit_idx:.1f}%\nR_sq: {r_sq:.4f}")
 
+    #%% Plots
+    fig, ax = plt.subplots(1, 1, sharex=True)
+    ax.plot(y[:, 0], 'k', label='meas')
+    ax.grid(True)
+    ax.plot(y_sim[:, 0], 'b', label='sim')
+    ax.plot(y[:, 0] - y_sim[:, 0], 'b', label='sim')
 
 
