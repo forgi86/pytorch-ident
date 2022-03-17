@@ -10,8 +10,8 @@ from loader import rlc_loader
 
 if __name__ == '__main__':
 
-    #model_filename = "ss_model_ae.pt"
-    model_filename = "ss_model_1step.pt"
+    model_filename = "ss_model_ms.pt"
+    #model_filename = "ss_model_1step.pt"
     model_data = torch.load(os.path.join("models", model_filename))
     n_feat = model_data["n_feat"]
 

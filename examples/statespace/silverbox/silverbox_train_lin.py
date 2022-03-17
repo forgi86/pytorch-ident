@@ -6,16 +6,20 @@ from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
 from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput
 from torchid.ss.dt.simulator import StateSpaceSimulator
-from torchid.ss.dt.estimators import FlippedLSTMStateEstimator
+from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import silverbox_loader
 import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
 
+    no_cuda = False  # no GPU, CPU only training
+    threads = 6  # max number of CPU threads
+
     # Parameters
     n_fit = 40000
-    subseq_len = 256
+    seq_sim_len = 256
+    seq_est_len = 32  # estimation sequence length
     batch_size = 64
     lr = 1e-5
     epochs = 10
@@ -24,22 +28,28 @@ if __name__ == '__main__':
     n_y = 1
     d_max = 3
 
+    # CPU/GPU resources
+    use_cuda = not no_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    torch.set_num_threads(threads)
+
     # Load dataset
     t_train, u_train, y_train = silverbox_loader("train", scale=True)
 
     #%% Prepare dataset
-    train_data = SubsequenceDataset(u_train, y_train, subseq_len=subseq_len)
+    load_len = seq_sim_len + seq_est_len
+    train_data = SubsequenceDataset(u_train, y_train, subseq_len=load_len)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
-    f_xu = LinearStateUpdate(n_x, n_u, d_max)
-    g_x = LinearOutput(n_x, n_y)
-    model = StateSpaceSimulator(f_xu, g_x)
-    state_estimator = FlippedLSTMStateEstimator(n_u=1, n_y=1, n_x=2)
+    f_xu = LinearStateUpdate(n_x, n_u, d_max).to(device)
+    g_x = LinearOutput(n_x, n_y).to(device)
+    model = StateSpaceSimulator(f_xu, g_x).to(device)
+    estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2).to(device)
 
     # Setup optimizer
     optimizer = optim.Adam([
         {'params': model.parameters(), 'lr': 1e-3},
-        {'params': state_estimator.parameters(), 'lr': 1e-3},
+        {'params': estimator.parameters(), 'lr': 1e-3},
     ], lr=lr)
 
     LOSS = []
@@ -58,13 +68,18 @@ if __name__ == '__main__':
             batch_u = batch_u.transpose(0, 1)  # transpose to time_first
             batch_y = batch_y.transpose(0, 1)  # transpose to time_first
 
-            batch_x0 = state_estimator(batch_u, batch_y)
-            batch_y_sim = model(batch_x0, batch_u)
+            # Estimate initial state
+            batch_u_est = batch_u[:seq_est_len]
+            batch_y_est = batch_y[:seq_est_len]
+            batch_x0 = estimator(batch_u_est, batch_y_est)
 
-            # Compute autoencoder loss
-            err_ae = batch_y - batch_y_sim
-            loss_ae = torch.mean(err_ae**2)
-            loss = loss_ae
+            # Simulate
+            batch_u_fit = batch_u[seq_est_len:]
+            batch_y_fit = batch_y[seq_est_len:]
+            batch_y_sim = model(batch_x0, batch_u_fit)
+
+            # Compute loss
+            loss = torch.nn.functional.mse_loss(batch_y_fit, batch_y_sim)
 
             # Statistics
             LOSS.append(loss.item())
@@ -87,13 +102,15 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
+    model = model.to("cpu")
+    estimator = estimator.to("cpu")
     model_filename = "ss_lin.pt"
     torch.save({"n_x": n_x,
                 "n_y": n_y,
                 "n_u": n_u,
                 "d_max": d_max,
-                "model": model.state_dict(),
-                "estimator": state_estimator.state_dict()
+                "model": model.to("cpu").state_dict(),
+                "estimator": estimator.to("cpu").state_dict()
                 },
                os.path.join("models", model_filename))
 
@@ -102,7 +119,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         u_v = torch.tensor(u_full[:, None, :])
         y_v = torch.tensor(y_full[:, None, :])
-        x0 = state_estimator(u_v, y_v)
+        x0 = estimator(u_v, y_v)
         y_sim = model(x0, u_v).squeeze(1)
 
     #%% Test
