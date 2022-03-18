@@ -129,7 +129,7 @@ if __name__ == '__main__':
     model_filename =  f"model_ss_{seq_len}step.pt"
     hidden_filename = f"hidden_ss_{seq_len}step.pt"
 
-    torch.save(nn_solution.state_update.state_dict(), os.path.join("models", model_filename))
+    torch.save(nn_solution.f_xu.state_dict(), os.path.join("models", model_filename))
     torch.save(x_hidden_fit, os.path.join("models", hidden_filename))
 
     # Plot figures

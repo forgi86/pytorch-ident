@@ -76,8 +76,8 @@ if __name__ == '__main__':
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 
-            batch_u = batch_u.transpose(0, 1)  # transpose to time_first
-            batch_y = batch_y.transpose(0, 1)  # transpose to time_first
+            batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
+            batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
             # Estimate initial state
             batch_u_est = batch_u[:seq_est_len]
@@ -110,21 +110,23 @@ if __name__ == '__main__':
     if not os.path.exists("models"):
         os.makedirs("models")
 
+    model = model.to("cpu")
+    estimator = estimator.to("cpu")
     model_filename = "ss_model_ms.pt"
     torch.save({
                 "n_x": n_x,
                 "n_feat": n_feat,
-                "model": model.to("cpu").state_dict(),
-                "estimator": estimator.to("cpu").state_dict()
+                "model": model.state_dict(),
+                "estimator": estimator.state_dict()
                 },
                os.path.join("models", model_filename))
 
     #%% Simulate
     with torch.no_grad():
-        u_v = torch.tensor(u[:, None, :]).to(device)
-        y_v = torch.tensor(y[:, None, :]).to(device)
-        x0 = estimator(u_v, y_v)
-        y_sim = model(x0, u_v).to("cpu")
+        u_v = torch.tensor(u[:, None, :])
+        y_v = torch.tensor(y[:, None, :])
+        x0 = torch.zeros(1, n_x, dtype=torch.float32)  # initial state set to 0 for simplicity
+        y_sim = model(x0, u_v)
 
     #%% Test
     fig, ax = plt.subplots(1, 1)

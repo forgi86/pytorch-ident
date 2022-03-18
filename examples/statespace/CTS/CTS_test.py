@@ -43,7 +43,7 @@ if __name__ == '__main__':
     # Setup neural model structure
     ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
     nn_solution = StateSpaceSimulator(ss_model)
-    nn_solution.state_update.load_state_dict(torch.load(os.path.join("models", model_name + ".pt")))
+    nn_solution.f_xu.load_state_dict(torch.load(os.path.join("models", model_name + ".pt")))
     x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pt"))
 
     # Evaluate the model in open-loop simulation against validation data

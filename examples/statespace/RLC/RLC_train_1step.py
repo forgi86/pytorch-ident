@@ -61,7 +61,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
 
         # Perform one-step ahead prediction
-        delta_x_hat = model.state_update(x_train[0:-1, :], u_train[0:-1, :])
+        delta_x_hat = model.f_xu(x_train[0:-1, :], u_train[0:-1, :])
         delta_x = x_train[1:, :] - x_train[0:-1, :]
 
         err = delta_x - delta_x_hat

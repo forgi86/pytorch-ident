@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     f_xu = PolynomialStateUpdate(n_x, n_u, d_max).to(device)
     g_x = LinearOutput(n_x, n_y).to(device)
+    f_xu.poly_coeffs = f_xu.poly_coeffs.to(device)  # TODO find a best way to do this automatically
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2).to(device)
 
@@ -60,16 +61,16 @@ if __name__ == '__main__':
 
     # Training loop
     itr = 0
-    model.state_update.freeze_nl()
+    model.f_xu.freeze_nl()
     for epoch in range(epochs):
         if epoch >= 5:
-            model.state_update.unfreeze_nl()
+            model.f_xu.unfreeze_nl()
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 
             # Compute fit loss
-            batch_u = batch_u.transpose(0, 1)  # transpose to time_first
-            batch_y = batch_y.transpose(0, 1)  # transpose to time_first
+            batch_u = batch_u.transpose(0, 1).to(device)  # transpose to time_first
+            batch_y = batch_y.transpose(0, 1).to(device)  # transpose to time_first
 
             # Estimate initial state
             batch_u_est = batch_u[:seq_est_len]
@@ -105,6 +106,7 @@ if __name__ == '__main__':
         os.makedirs("models")
 
     model = model.to("cpu")
+    model.f_xu.poly_coeffs = f_xu.poly_coeffs.to("cpu")
     estimator = estimator.to("cpu")
     model_filename = "ss_poly.pt"
     torch.save({"n_x": n_x,

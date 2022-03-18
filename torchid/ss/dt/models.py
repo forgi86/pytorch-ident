@@ -45,10 +45,10 @@ class NeuralStateUpdate(nn.Module):
                     nn.init.normal_(m.weight, mean=0, std=1e-4)
                     nn.init.constant_(m.bias, val=0)
     
-    def forward(self, X, U):
-        XU = torch.cat((X, U), -1)
-        DX = self.net(XU)
-        return DX
+    def forward(self, x, u):
+        xu = torch.cat((x, u), -1)
+        dx = self.net(xu)
+        return dx
 
 
 class PolynomialStateUpdate(nn.Module):
@@ -77,7 +77,7 @@ class PolynomialStateUpdate(nn.Module):
         self.n_u = n_u
         poly_coeffs = valid_coeffs(n_x + n_u, d_max)
         self.n_poly = len(poly_coeffs)
-        self.poly_coeffs = torch.tensor(poly_coeffs)
+        self.poly_coeffs = torch.tensor(poly_coeffs, dtype=torch.int64)
         self.A = nn.Linear(n_x, n_x, bias=False)
         self.B = nn.Linear(n_u, n_x, bias=False)
         #self.D = nn.linear(n_u, n_y, bias=False)

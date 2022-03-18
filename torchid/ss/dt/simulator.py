@@ -34,8 +34,8 @@ class StateSpaceSimulator(nn.Module):
 
     def __init__(self, f_xu, g_x=None, batch_first=False):
         super().__init__()
-        self.state_update = f_xu
-        self.output = g_x
+        self.f_xu = f_xu
+        self.g_x = g_x
         self.batch_first = batch_first
 
     def simulate_state(self, x_0, u):
@@ -46,7 +46,7 @@ class StateSpaceSimulator(nn.Module):
         for u_step in u.split(1, dim=dim_time):  # split along the time axis
             u_step = u_step.squeeze(dim_time)
             x += [x_step]
-            dx = self.state_update(x_step, u_step)
+            dx = self.f_xu(x_step, u_step)
             x_step = x_step + dx
 
         x = torch.stack(x, dim_time)
@@ -54,8 +54,8 @@ class StateSpaceSimulator(nn.Module):
 
     def forward(self, x_0, u, return_x=False):
         x = self.simulate_state(x_0, u)
-        if self.output is not None:
-            y = self.output(x)
+        if self.g_x is not None:
+            y = self.g_x(x)
         else:
             y = x
         if not return_x:
