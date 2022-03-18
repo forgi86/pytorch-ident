@@ -4,7 +4,7 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchid.datasets import SubsequenceDataset
-from torchid.ss.dt.models import PolynomialStateUpdate, LinearStateUpdate, LinearOutput
+from torchid.ss.dt.models import LinearStateUpdate, LinearOutput
 from torchid.ss.dt.simulator import StateSpaceSimulator
 from torchid.ss.dt.estimators import LSTMStateEstimator
 from loader import silverbox_loader

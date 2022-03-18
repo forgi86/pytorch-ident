@@ -38,7 +38,7 @@ if __name__ == '__main__':
     batch_size = 32  # batch size q
     lr = 1e-4  # learning rate
     n_fit = 5000
-    n_feat = 50
+    hidden_size = 50
     n_x = 2
 
     # CPU/GPU resources
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     t, u, y, _ = rlc_loader("train", "nl", noise_std=0.1, n_data=n_fit)  # state not used
 
     # Setup neural model structure
-    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=n_feat).to(device)
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=hidden_size).to(device)
     g_x = ChannelsOutput(channels=[0]).to(device)  # output is channel 0
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     estimator = LSTMStateEstimator(n_u=1, n_y=1, n_x=2).to(device)
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     model_filename = "ss_model_ms.pt"
     torch.save({
                 "n_x": n_x,
-                "n_feat": n_feat,
+                "n_feat": hidden_size,
                 "model": model.state_dict(),
                 "estimator": estimator.state_dict()
                 },

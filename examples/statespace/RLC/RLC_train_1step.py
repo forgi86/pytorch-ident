@@ -43,7 +43,7 @@ if __name__ == '__main__':
     x_train = torch.tensor(x, dtype=torch.float32)
 
     # Setup neural model structure
-    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=n_feat)
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=n_feat)
     model = StateSpaceSimulator(f_xu)
 
     # Setup optimizer
