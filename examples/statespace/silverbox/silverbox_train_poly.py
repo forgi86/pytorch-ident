@@ -23,6 +23,7 @@ if __name__ == '__main__':
     batch_size = 64
     lr = 1e-3
     epochs = 10
+    epochs_lin = 5
     n_x = 2
     n_u = 1
     n_y = 1
@@ -62,9 +63,12 @@ if __name__ == '__main__':
     # Training loop
     itr = 0
     model.f_xu.freeze_nl()
+    model.f_xu.disable_nl()
     for epoch in range(epochs):
-        if epoch >= 5:
+        if epoch >= epochs_lin:
+            model.f_xu.enable_nl()
             model.f_xu.unfreeze_nl()
+            model.f_xu.freeze_lin()  # do not further train the linear part
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 

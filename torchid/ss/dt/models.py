@@ -82,6 +82,7 @@ class PolynomialStateUpdate(nn.Module):
         # self.D = nn.linear(n_u, n_y, bias=False)
         self.E = nn.Linear(self.n_poly, n_x, bias=False)
         # self.F = nn.linear(self.n_poly, n_y)
+        self.nl_on = True
 
         if init_small:
             nn.init.normal_(self.A.weight, mean=0, std=1e-3)
@@ -90,19 +91,35 @@ class PolynomialStateUpdate(nn.Module):
 
             # nn.init.constant_(module.bias, val=0)
 
+    def enable_nl(self):
+        self.nl_on = True
+
+    def disable_nl(self):
+        self.nl_on = False
+
     def freeze_nl(self):
         self.E.requires_grad_(False)
 
     def unfreeze_nl(self):
         self.E.requires_grad_(True)
 
+    def freeze_lin(self):
+        self.A.requires_grad_(False)
+        self.B.requires_grad_(False)
+
+    def unfreeze_lin(self):
+        self.A.requires_grad_(True)
+        self.B.requires_grad_(True)
+
     def forward(self, x, u):
         xu = torch.cat((x, u), dim=-1)
         xu_ = xu.unsqueeze(xu.ndim - 1)
-        zeta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
-        # eta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
 
-        dx = self.A(x) + self.B(u) + self.E(zeta)
+        dx = self.A(x) + self.B(u)
+        if self.nl_on:
+            zeta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
+            # eta = torch.prod(torch.pow(xu_, self.poly_coeffs), axis=-1)
+            dx = dx + self.E(zeta)
         return dx
 
 
@@ -157,7 +174,13 @@ class NeuralLinStateUpdate(nn.Module):
         self.net.requires_grad_(False)
 
     def unfreeze_nl(self):
-        self.net.requires_grad_(False)
+        self.net.requires_grad_(True)
+
+    def freeze_lin(self):
+        self.lin.requires_grad_(False)
+
+    def unfreeze_lin(self):
+        self.lin.requires_grad_(True)
 
     def enable_nl(self):
         self.nl_on = True
@@ -233,8 +256,8 @@ class CTSNeuralStateSpace(nn.Module):
                     nn.init.normal_(m.weight, mean=0, std=1e-4)
                     nn.init.constant_(m.bias, val=0)
 
-    def forward(self, X, U):
-        xu = torch.cat((X, U), -1)
+    def forward(self, x, u):
+        xu = torch.cat((x, u), -1)
         dx = self.net(xu)
         return dx
 
@@ -305,6 +328,25 @@ class NeuralLinOutput(nn.Module):
                                  )
 
         self.lin = nn.Linear(n_x, n_y, bias=False)
+        self.nl_on = True
+
+    def freeze_nl(self):
+        self.net.requires_grad_(False)
+
+    def unfreeze_nl(self):
+        self.net.requires_grad_(True)
+
+    def freeze_lin(self):
+        self.lin.requires_grad_(False)
+
+    def unfreeze_lin(self):
+        self.lin.requires_grad_(True)
+
+    def enable_nl(self):
+        self.nl_on = True
+
+    def disable_nl(self):
+        self.nl_on = False
 
     def forward(self, x):
         return self.net(x)
