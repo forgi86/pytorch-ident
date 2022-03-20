@@ -21,16 +21,15 @@ if __name__ == '__main__':
     epochs_lin = 20
     batch_size = 1024
     seq_len = 80
-    seq_est_len = 10
+    seq_est_len = 50
     est_hidden_size = 16
     hidden_size = 16
     lr = 1e-3
 
     no_cuda = False
-    dry_run = False
     log_interval = 20
 
-    torch.manual_seed(42)
+    torch.manual_seed(10)
 
     # CPU/GPU resources
     use_cuda = not no_cuda and torch.cuda.is_available()
@@ -50,7 +49,7 @@ if __name__ == '__main__':
     t_val, u_val, y_val = t_train[n_fit:] - t_train[n_fit], u_train[n_fit:], y_train[n_fit:]
 
     # %%  Prepare dataset, models, optimizer
-    train_data = SubsequenceDataset(u_train, y_train, subseq_len=seq_len + seq_est_len)
+    train_data = SubsequenceDataset(u_fit, y_fit, subseq_len=seq_len + seq_est_len)
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     u_val_t = torch.tensor(u_val[:, None, :]).to(device)
     y_val_t = torch.tensor(y_val[:, None, :]).to(device)
@@ -60,8 +59,7 @@ if __name__ == '__main__':
     model = StateSpaceSimulator(f_xu, g_x).to(device)
     estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
                                                      hidden_size=est_hidden_size,
-                                                     seq_len=seq_est_len)
-    estimator = estimator.to(device)
+                                                     seq_len=seq_est_len).to(device)
 
     # Setup optimizer
     optimizer = optim.Adam(list(model.parameters())+list(estimator.parameters()), lr=lr)
