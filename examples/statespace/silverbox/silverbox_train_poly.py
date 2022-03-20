@@ -22,8 +22,8 @@ if __name__ == '__main__':
     seq_est_len = 32  # estimation sequence length
     batch_size = 64
     lr = 1e-3
-    epochs = 10
-    epochs_lin = 5
+    epochs = 4
+    epochs_lin = 2
     n_x = 2
     n_u = 1
     n_y = 1
@@ -55,9 +55,6 @@ if __name__ == '__main__':
     ], lr=lr)
 
     LOSS = []
-    LOSS_CONSISTENCY = []
-    LOSS_FIT = []
-
     start_time = time.time()
 
     # Training loop
@@ -68,7 +65,7 @@ if __name__ == '__main__':
         if epoch >= epochs_lin:
             model.f_xu.enable_nl()
             model.f_xu.unfreeze_nl()
-            model.f_xu.freeze_lin()  # do not further train the linear part
+            # model.f_xu.freeze_lin()  # do not further train the linear part
         for batch_idx, (batch_u, batch_y) in enumerate(train_loader):
             optimizer.zero_grad()
 
@@ -132,10 +129,10 @@ if __name__ == '__main__':
 
     #%% Test
     fig, ax = plt.subplots(1, 1)
-    ax.plot(LOSS, 'k', label='ALL')
+    ax.plot(LOSS, 'k', label='Training loss')
     ax.grid(True)
     ax.legend()
-    ax.set_ylabel("Loss (-)")
+    ax.set_ylabel("Loss")
     ax.set_xlabel("Iteration (-)")
 
     fig, ax = plt.subplots(1, 1, sharex=True)

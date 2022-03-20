@@ -21,7 +21,7 @@ if __name__ == '__main__':
     ts = t[1, 0] - t[0, 0]
 
     # Setup neural model structure and load fitted model parameters
-    f_xu = NeuralStateUpdate(n_x=2, n_u=1, n_feat=n_feat)
+    f_xu = NeuralStateUpdate(n_x=2, n_u=1, hidden_size=n_feat)
     g_x = ChannelsOutput(channels=[0])  # output mapping corresponding to channel 0
     model = StateSpaceSimulator(f_xu, g_x)
     model.load_state_dict(model_data["model"])

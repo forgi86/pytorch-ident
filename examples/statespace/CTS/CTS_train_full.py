@@ -39,7 +39,7 @@ if __name__ == '__main__':
     time_fit = time_exp
 
     # Setup neural model structure
-    ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
+    ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, hidden_size=64)
     nn_solution = StateSpaceSimulator(ss_model)
 
     model_name = 'model_SS_256step'

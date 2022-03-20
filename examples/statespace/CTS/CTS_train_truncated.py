@@ -40,7 +40,7 @@ if __name__ == '__main__':
     time_fit = time_exp
 
     # Setup neural model structure
-    f_xu = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
+    f_xu = CTSNeuralStateSpace(n_x=2, n_u=1, hidden_size=64)
     nn_solution = StateSpaceSimulator(f_xu)
 
     # Setup optimizer

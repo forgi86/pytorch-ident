@@ -49,6 +49,6 @@ if __name__ == '__main__':
     ax.plot(y[:, 0], 'k', label='meas')
     ax.grid(True)
     ax.plot(y_sim[:, 0], 'b', label='sim')
-    ax.plot(y[:, 0] - y_sim[:, 0], 'b', label='sim')
+    ax.plot(y[:, 0] - y_sim[:, 0], 'r', label='err')
 
 

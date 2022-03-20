@@ -41,7 +41,7 @@ if __name__ == '__main__':
     time_val = time_exp[idx_val_start:idx_val_end]
 
     # Setup neural model structure
-    ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, n_feat=64)
+    ss_model = CTSNeuralStateSpace(n_x=2, n_u=1, hidden_size=64)
     nn_solution = StateSpaceSimulator(ss_model)
     nn_solution.f_xu.load_state_dict(torch.load(os.path.join("models", model_name + ".pt")))
     x_hidden_fit = torch.load(os.path.join("models", hidden_name + ".pt"))
