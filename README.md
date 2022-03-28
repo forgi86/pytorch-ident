@@ -1,7 +1,7 @@
 # System identification tools in PyTorch
 A collection of system identification tools implemented in PyTorch.
 
-* State-space identification methods (see [1], [2], [3])
+* State-space identification methods (see [1], [2], [3], [6])
 * Differentiable transfer functions (see [4], [5])
 
 ## Examples and Documentation
@@ -49,3 +49,4 @@ in the project root folder (where the file setup.py is located).
 [3] M. Forgione and D. Piga. Continuous-time system identification with neural networks: model structures and fitting criteria. European Journal of Control, 59:68-81, 2021. <br/><br/>
 [4] M. Forgione and D. Piga. dynoNet: a neural network architecture for learning dynamical systems. International Journal of Adaptive Control and Signal Processing, 2021. <br/><br/>
 [5] D. Piga, M.Forgione and M. Mejari. Deep learning with transfer functions: new applications in system identification. In Proceedings of the the 2021 SysId Conference, 2021. <br/><br/>
+[6] G. Beintema, R. Toth and M. Schoukens. Nonlinear state-space identification using deep encoder networks. Learning for Dynamics and Control. PMLR, 2021. <br/><br/>
