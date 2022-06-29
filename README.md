@@ -31,7 +31,7 @@ pip install pytorch-ident
 This will install the current [stable version](https://pypi.org/project/pytorch-ident/) from the PyPI package repository.
 
 ### Latest version from GitHub
-1. Get a local copy the pyMPC project. For instance, run 
+1. Get a local copy the project. For instance, run 
 ```
 git clone https://github.com/forgi86/pytorch-ident.git
 ```
@@ -39,7 +39,7 @@ in a terminal to clone the project using git. Alternatively, download the zipped
 
 2. Install pytorch-ident by running
 ```
-pip install -e .
+pip install .
 ```
 in the project root folder (where the file setup.py is located). 
 
