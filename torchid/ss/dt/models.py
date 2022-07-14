@@ -349,7 +349,10 @@ class NeuralLinOutput(nn.Module):
         self.nl_on = False
 
     def forward(self, x):
-        return self.net(x)
+        y = self.lin(x)
+        if self.nl_on:
+            y += self.net(x)
+        return y
 
 
 class ChannelsOutput(nn.Module):
