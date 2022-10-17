@@ -17,7 +17,7 @@ if __name__ == '__main__':
     save_folder = "models"
 
     epochs_adam = 100
-    epochs_bfgs = 10
+    epochs_bfgs = 5
     epochs_lin = 20
     batch_size = 1024
     seq_len = 80
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     f_xu = models.NeuralLinStateUpdate(n_x, n_u, hidden_size=hidden_size).to(device)
     g_x = models.NeuralLinOutput(n_x, n_u, hidden_size=hidden_size).to(device)
     model = StateSpaceSimulator(f_xu, g_x).to(device)
-    estimator = estimators.FeedForwardStateEstimator(n_u=n_y, n_y=n_y, n_x=n_x,
+    estimator = estimators.FeedForwardStateEstimator(n_u=n_u, n_y=n_y, n_x=n_x,
                                                      hidden_size=est_hidden_size,
                                                      seq_len=seq_est_len).to(device)
 
