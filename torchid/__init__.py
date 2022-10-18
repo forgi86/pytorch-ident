@@ -1,3 +1,3 @@
-from .io import *
-from .ss import *
-from .dynonet import *
+from . import dynonet
+from . import io
+from . import ss
