@@ -21,7 +21,7 @@ class SubsequenceDataset(Dataset):
         self.length = self.tensors[0].shape[0]
 
     def __len__(self):
-        return self.length - self.subseq_len
+        return self.length - self.subseq_len + 1
 
     def __getitem__(self, idx):
         subsequences = [tensor[idx:idx+self.subseq_len] for tensor in self.tensors]
